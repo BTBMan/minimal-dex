@@ -5,8 +5,8 @@ import { Toaster } from '@/components/ui/sonner'
 import '../styles/globals.css'
 
 export const metadata: Metadata = {
-  title: 'nextjs-foundry-scaffold',
-  description: 'A scaffold for building a Next.js dapp with Foundry',
+  title: 'Minimal DEX',
+  description: 'Minimal implementation of Uniswap V3',
 }
 
 export default function RootLayout({

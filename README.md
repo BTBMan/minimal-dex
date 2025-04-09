@@ -1,3 +1,3 @@
-# Next.js Foundry Scaffold
+# Minimal DEX
 
-A scaffold for building a Next.js dapp with Foundry.
+Minimal implementation of Uniswap V3 using Foundry and Next.js.
