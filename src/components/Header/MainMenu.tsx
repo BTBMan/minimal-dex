@@ -2,16 +2,15 @@
 
 import { DesktopIcon, MoonIcon, PersonIcon, SunIcon } from '@radix-ui/react-icons'
 import { useTheme } from 'next-themes'
-import Link from 'next/link'
 import { normalize } from 'viem/ens'
 import { useAccount, useEnsAvatar, useEnsName } from 'wagmi'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ConnectButton from './ConnectButton'
 
 export default function MainMenu() {
-  const { address, isConnected } = useAccount()
+  const { address } = useAccount()
   const { data: ensName } = useEnsName({ address })
   const { data: ensAvatar } = useEnsAvatar({ name: normalize(ensName || '') })
 
@@ -48,16 +47,6 @@ export default function MainMenu() {
           <DropdownMenuLabel>
             <ConnectButton />
           </DropdownMenuLabel>
-          {isConnected && (
-            <div className="[&>a[role='menuitem']]:leading-[30px] [&>a[role='menuitem']]:hover:cursor-pointer">
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/profile">
-                  Profile
-                </Link>
-              </DropdownMenuItem>
-            </div>
-          )}
           <DropdownMenuSeparator />
           <DropdownMenuLabel>
             <Tabs

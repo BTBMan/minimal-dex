@@ -9,8 +9,8 @@ export default function Header() {
         <div className="flex items-center">
           <div className="mr-6">
             <Link href="/">
-              <div className="w-[40px] h-[40px] p-2 bg-black rounded-full">
-                <img className="w-full h-full block" src="/logo.svg" />
+              <div className="w-[40px] h-[40px] flex items-center justify-center text-[12px] font-bold bg-foreground text-background rounded-full">
+                SWAP
               </div>
             </Link>
           </div>
