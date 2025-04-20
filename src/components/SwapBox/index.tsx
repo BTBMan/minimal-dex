@@ -11,7 +11,7 @@ export default function SwapBox() {
   const [tokenB, setTokenB] = useState<string>()
   const [amountA, setAmountA] = useState<string>()
   const [amountB, setAmountB] = useState<string>()
-  const [disableToken, setDisableToken] = useState<'tokenA' | 'tokenB'>('tokenB')
+  const [activeToken, setActiveToken] = useState<'tokenA' | 'tokenB'>('tokenA')
 
   return (
     <div>
@@ -19,7 +19,7 @@ export default function SwapBox() {
         <TokenInputItem
           label="Sell"
           value={amountA}
-          disabled={disableToken === 'tokenA'}
+          active={activeToken === 'tokenA'}
           onChange={setAmountA}
           tokenSelector={(
             <TokenSelector
@@ -27,13 +27,14 @@ export default function SwapBox() {
               onChange={setTokenA}
             />
           )}
+          onClick={() => setActiveToken('tokenA')}
         />
         <TransformButton />
         <TokenInputItem
           className="mt-1"
           label="Buy"
           value={amountB}
-          disabled={disableToken === 'tokenB'}
+          active={activeToken === 'tokenB'}
           onChange={setAmountB}
           tokenSelector={(
             <TokenSelector
@@ -41,6 +42,7 @@ export default function SwapBox() {
               onChange={setTokenB}
             />
           )}
+          onClick={() => setActiveToken('tokenB')}
         />
         <Button className="w-full mt-2 h-[50px] rounded-[20px] text-[18px]">Swap</Button>
       </div>
