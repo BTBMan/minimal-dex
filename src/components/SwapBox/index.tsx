@@ -7,11 +7,21 @@ import TokenInputItem from './TokenInputItem'
 import TransformButton from './TransformButton'
 
 export default function SwapBox() {
-  const [tokenA, setTokenA] = useState<string>()
-  const [tokenB, setTokenB] = useState<string>()
-  const [amountA, setAmountA] = useState<string>()
-  const [amountB, setAmountB] = useState<string>()
+  const [tokenA, setTokenA] = useState<string>('')
+  const [tokenB, setTokenB] = useState<string>('')
+  const [amountA, setAmountA] = useState<string>('')
+  const [amountB, setAmountB] = useState<string>('')
   const [activeToken, setActiveToken] = useState<'tokenA' | 'tokenB'>('tokenA')
+
+  function switchToken() {
+    const oldTokenA = tokenA
+    const oldAmountA = amountA
+    setTokenA(tokenB)
+    setAmountA(amountB)
+    setTokenB(oldTokenA)
+    setAmountB(oldAmountA)
+    setActiveToken(activeToken === 'tokenA' ? 'tokenB' : 'tokenA')
+  }
 
   return (
     <div>
@@ -29,7 +39,7 @@ export default function SwapBox() {
           )}
           onClick={() => setActiveToken('tokenA')}
         />
-        <TransformButton />
+        <TransformButton onClick={switchToken} />
         <TokenInputItem
           className="mt-1"
           label="Buy"

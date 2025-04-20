@@ -1,5 +1,5 @@
+import { useControllableValue } from 'ahooks'
 import React from 'react'
-import { useDefault } from 'react-use'
 import { cn } from '@/utils'
 
 interface Props {
@@ -14,17 +14,20 @@ interface Props {
   onClick?: () => void
 }
 
-export default function TokenInputItem({
-  className,
-  label,
-  defaultValue,
-  value: _value,
-  active,
-  tokenSelector,
-  onChange,
-  onClick,
-}: Props) {
-  const [value, setValue] = useDefault(defaultValue, () => _value ?? defaultValue ?? '')
+export default function TokenInputItem(props: Props) {
+  const {
+    className,
+    label,
+    defaultValue,
+    value: _value,
+    active,
+    tokenSelector,
+    onChange,
+    onClick,
+  } = props
+  const [value, setValue] = useControllableValue(props, {
+    defaultValue: _value ?? defaultValue ?? '',
+  })
   const onAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value
     if (/^\d*(?:\.\d*)?$/.test(v)) {

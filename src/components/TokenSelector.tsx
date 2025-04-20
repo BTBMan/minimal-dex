@@ -1,5 +1,5 @@
+import { useControllableValue } from 'ahooks'
 import { useState } from 'react'
-import { useDefault } from 'react-use'
 import {
   Select,
   SelectContent,
@@ -22,13 +22,16 @@ interface TokenItem {
   address: string
 }
 
-export default function TokenSelector({
-  defaultValue,
-  value: _value,
-  disabled,
-  onChange,
-}: Props) {
-  const [value, setValue] = useDefault(defaultValue, () => _value ?? defaultValue ?? '')
+export default function TokenSelector(props: Props) {
+  const {
+    defaultValue,
+    value: _value,
+    disabled,
+    onChange,
+  } = props
+  const [value, setValue] = useControllableValue(props, {
+    defaultValue: _value ?? defaultValue ?? '',
+  })
 
   const [tokenList] = useState<TokenItem[]>([
     {
