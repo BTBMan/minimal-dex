@@ -8,6 +8,8 @@ declare global {
 
   type PagePropsWithChildren<P = unknown, S = unknown> = Readonly<PropsWithChildren<PageProps<P, S>>>
 
+  type Nullable<T> = null | undefined | T
+
   namespace NodeJS {
     interface ProcessEnv {
       // WalletConnect

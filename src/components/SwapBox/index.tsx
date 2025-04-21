@@ -7,10 +7,10 @@ import TokenInputItem from './TokenInputItem'
 import TransformButton from './TransformButton'
 
 export default function SwapBox() {
-  const [tokenA, setTokenA] = useState<string>('')
-  const [tokenB, setTokenB] = useState<string>('')
-  const [amountA, setAmountA] = useState<string>('')
-  const [amountB, setAmountB] = useState<string>('')
+  const [tokenA, setTokenA] = useState<Nullable<string>>()
+  const [tokenB, setTokenB] = useState<Nullable<string>>()
+  const [amountA, setAmountA] = useState<Nullable<number>>(1)
+  const [amountB, setAmountB] = useState<Nullable<number>>()
   const [activeToken, setActiveToken] = useState<'tokenA' | 'tokenB'>('tokenA')
 
   function switchToken() {
@@ -23,14 +23,21 @@ export default function SwapBox() {
     setActiveToken(activeToken === 'tokenA' ? 'tokenB' : 'tokenA')
   }
 
+  const canSwap = () => {
+    return amountA && amountB && tokenA && tokenB
+  }
+
   return (
     <div>
       <div className="w-[480px] mx-auto pt-12">
+        {amountA}
         <TokenInputItem
           label="Sell"
           value={amountA}
           active={activeToken === 'tokenA'}
-          onChange={setAmountA}
+          onChange={(v) => {
+            setAmountA(v)
+          }}
           tokenSelector={(
             <TokenSelector
               value={tokenA}
@@ -54,7 +61,7 @@ export default function SwapBox() {
           )}
           onClick={() => setActiveToken('tokenB')}
         />
-        <Button className="w-full mt-2 h-[50px] rounded-[20px] text-[18px]">Swap</Button>
+        <Button className="w-full mt-2 h-[50px] rounded-[20px] text-[18px]" disabled={!canSwap()}>Swap</Button>
       </div>
     </div>
   )

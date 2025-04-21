@@ -34,6 +34,8 @@ export default antfu(
         order: 'asc',
         type: 'natural',
       }],
+      'react-hooks-extra/no-direct-set-state-in-use-effect': 'off',
+      'react-hooks-extra/no-direct-set-state-in-use-layout-effect': 'off',
     },
   },
 ).prepend(

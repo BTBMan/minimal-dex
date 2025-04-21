@@ -1,4 +1,3 @@
-import { useControllableValue } from 'ahooks'
 import { useState } from 'react'
 import {
   Select,
@@ -7,12 +6,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useControllableValue } from '@/hooks/use-controllable-value'
 
 interface Props {
-  defaultValue?: string
-  value?: string
+  defaultValue?: Nullable<string>
+  value?: Nullable<string>
   disabled?: boolean
-  onChange: (value: string) => void
+  onChange?: (value: Nullable<string>) => void
 }
 
 interface TokenItem {
@@ -24,14 +24,10 @@ interface TokenItem {
 
 export default function TokenSelector(props: Props) {
   const {
-    defaultValue,
-    value: _value,
     disabled,
     onChange,
   } = props
-  const [value, setValue] = useControllableValue(props, {
-    defaultValue: _value ?? defaultValue ?? '',
-  })
+  const [value, setValue] = useControllableValue(props)
 
   const [tokenList] = useState<TokenItem[]>([
     {

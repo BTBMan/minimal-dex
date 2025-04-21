@@ -1,16 +1,17 @@
-import { useControllableValue } from 'ahooks'
+import { useControllableValue as useControllableValueAhooks } from 'ahooks'
 import React from 'react'
-import { cn } from '@/utils'
+import { useControllableValue } from '@/hooks/use-controllable-value'
+import { cn, isNullable } from '@/utils'
 
 interface Props {
   className?: string
   label: string
-  defaultValue?: string
-  value?: string
+  defaultValue?: Nullable<number>
+  value?: Nullable<number>
   disabled?: boolean
   active?: boolean
   tokenSelector?: React.ReactNode
-  onChange?: (value: string) => void
+  onChange?: (value: Nullable<number>) => void
   onClick?: () => void
 }
 
@@ -18,23 +19,22 @@ export default function TokenInputItem(props: Props) {
   const {
     className,
     label,
-    defaultValue,
-    value: _value,
     active,
     tokenSelector,
-    onChange,
     onClick,
   } = props
-  const [value, setValue] = useControllableValue(props, {
-    defaultValue: _value ?? defaultValue ?? '',
+  // const [value, setValue] = useControllableValue(props)
+  const [value, setValue] = useControllableValueAhooks(props, {
+    defaultValue: '',
   })
   const onAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value
     if (/^\d*(?:\.\d*)?$/.test(v)) {
-      setValue(v)
-      onChange?.(v)
+      setValue(isNullable(v) || v === '' ? null : Number(v))
     }
   }
+
+  console.log('render')
 
   return (
     <div
