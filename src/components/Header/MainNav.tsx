@@ -6,6 +6,15 @@ export default function MainNav() {
       <Link href="/swap">
         Swap
       </Link>
+      <Link href="/pool">
+        Pool
+      </Link>
+      <Link href="/position">
+        Position
+      </Link>
+      <Link href="/faucet">
+        Faucet
+      </Link>
     </nav>
   )
 }
