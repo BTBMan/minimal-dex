@@ -1,4 +1,3 @@
-import { useControllableValue as useControllableValueAhooks } from 'ahooks'
 import React from 'react'
 import { useControllableValue } from '@/hooks/use-controllable-value'
 import { cn, isNullable } from '@/utils'
@@ -23,18 +22,13 @@ export default function TokenInputItem(props: Props) {
     tokenSelector,
     onClick,
   } = props
-  // const [value, setValue] = useControllableValue(props)
-  const [value, setValue] = useControllableValueAhooks(props, {
-    defaultValue: '',
-  })
+  const [value, setValue] = useControllableValue(props)
   const onAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value
     if (/^\d*(?:\.\d*)?$/.test(v)) {
       setValue(isNullable(v) || v === '' ? null : Number(v))
     }
   }
-
-  console.log('render')
 
   return (
     <div

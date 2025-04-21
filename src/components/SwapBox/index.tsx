@@ -30,7 +30,6 @@ export default function SwapBox() {
   return (
     <div>
       <div className="w-[480px] mx-auto pt-12">
-        {amountA}
         <TokenInputItem
           label="Sell"
           value={amountA}

@@ -1,5 +1,5 @@
 import type React from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { isFunction, isNullable } from '@/utils'
 import usePrevious from './use-previous'
 
@@ -27,16 +27,14 @@ export function useControllableValue<T>(props?: Props<T>): [T, React.Dispatch<Re
       firstRenderRef.current = false
       return
     }
-    if (isControlled) {
+    if (!isControlled && prevValue !== value) {
       setStateValue(value ?? DEFAULT_VALUE)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
   // avoid re-render when value is controlled
-  const mergedValue = useMemo(() => {
-    return isControlled ? value : stateValue
-  }, [value, stateValue, isControlled])
+  const mergedValue = isControlled ? value : stateValue
 
   const handleChange = (v: React.SetStateAction<Nullable<T>>) => {
     const _v = (isFunction(v) ? v(stateValue) : v)
