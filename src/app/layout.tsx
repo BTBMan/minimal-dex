@@ -19,7 +19,7 @@ export default function RootLayout({
           <div className="app">
             <Header />
             <main>
-              <div className="main-content">
+              <div className="w-[var(--main-min-width)] mx-auto">
                 {children}
               </div>
             </main>
