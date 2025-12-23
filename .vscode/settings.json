@@ -37,8 +37,16 @@
   ],
 
   "[solidity]": {
-    "editor.defaultFormatter": "NomicFoundation.hardhat-solidity",
+    "editor.defaultFormatter": "JuanBlanco.solidity",
     "editor.formatOnSave": true
   },
-  "solidity.formatter": "forge"
+  "solidity.formatter": "forge",
+  "solidity.packageDefaultDependenciesContractsDirectory": [
+    "contract/src",
+    "contract/script",
+    "contract/test"
+  ],
+  "solidity.packageDefaultDependenciesDirectory": [
+    "contract/lib"
+  ]
 }
