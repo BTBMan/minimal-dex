@@ -41,6 +41,7 @@
     "editor.formatOnSave": true
   },
   "solidity.formatter": "forge",
+  "solidity.monoRepoSupport": false,
   "solidity.packageDefaultDependenciesContractsDirectory": [
     "contract/src",
     "contract/script",
