@@ -8,3 +8,6 @@ broadcast = "contract/broadcast"
 libs = [ "contract/lib" ]
 solc_version = "0.8.28"
 remappings = [ "@openzeppelin/contracts/=contract/lib/openzeppelin-contracts/contracts/", ]
+
+[lint]
+exclude_lints = [ "screaming-snake-case-immutable" ]

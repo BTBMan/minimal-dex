@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 /* Imports *******/
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Script} from "forge-std/Script.sol";
 
 /* Events ********/
 
@@ -11,6 +10,7 @@ import {Script} from "forge-std/Script.sol";
 
 /* Interfaces ****/
 import {IPool} from "../interfaces/IPool.sol";
+import {IMintCallback} from "../interfaces/callback/IMintCallback.sol";
 
 /* Libraries *****/
 import {Tick} from "../libraries/Tick.sol";
@@ -41,12 +41,6 @@ contract Pool is IPool {
     address public immutable token1;
 
     // Current price and its corresponding tick
-    struct Slot0 {
-        // Current sqrt(P)
-        uint160 sqrtPriceX96;
-        // Current tick
-        int24 tick;
-    }
     Slot0 public slot0;
 
     // Amount of liquidity, L.
@@ -57,6 +51,14 @@ contract Pool is IPool {
     // Positions info
     // Position key is the bytes32 keccak256(owner, tickLower, tickUpper)
     mapping(bytes32 => Position.Info) public positions;
+
+    ////////////////////////////////////
+    // Events                         //
+    ////////////////////////////////////
+
+    ////////////////////////////////////
+    // Errors                         //
+    ////////////////////////////////////
 
     ////////////////////////////////////
     // Modifiers                      //
@@ -104,6 +106,9 @@ contract Pool is IPool {
             revert ZeroLiquidity();
         }
 
+        // Update liquidity
+        liquidity += amount;
+
         // Update tick info
         ticks.update(tickLower, amount);
         ticks.update(tickUpper, amount);
@@ -127,13 +132,16 @@ contract Pool is IPool {
             balance1Before = balance1();
         }
 
-        // Transferring ...
+        // Transferring, use contract callback function to execute
+        // Can not let user transfer directly cuz we don't trust user
+        // We should deployed a contract that implements callback function we defined
+        IMintCallback(msg.sender).mintCallback(amount0, amount1);
 
         // Validate balance after transfer
-        if (amount > 0 && balance0Before + amount > balance0()) {
+        if (amount0 > 0 && balance0Before + amount0 > balance0()) {
             revert InsufficientInputAmount();
         }
-        if (amount > 0 && balance1Before + amount > balance1()) {
+        if (amount1 > 0 && balance1Before + amount1 > balance1()) {
             revert InsufficientInputAmount();
         }
 
