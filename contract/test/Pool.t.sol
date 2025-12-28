@@ -151,9 +151,10 @@ contract PoolTest is Test, IPoolTest, IMintCallback, ISwapCallback {
         assertEq(token0.balanceOf((address(pool))), uint256(int256(poolBalance0) + amount0Delta));
         assertEq(token1.balanceOf((address(pool))), uint256(int256(poolBalance1) + amount1Delta));
 
-        // Check sqrtPrice and tick
+        // Check sqrtPrice, tick and liquidity
         (uint160 sqrtPriceX96, int24 tick) = pool.slot0();
         assertEq(sqrtPriceX96, 5604469350942327889444743441197);
         assertEq(tick, 85184);
+        assertEq(pool.liquidity(), 1517882343751509868544);
     }
 }
