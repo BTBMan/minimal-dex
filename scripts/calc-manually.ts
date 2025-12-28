@@ -4,12 +4,12 @@
 // tick upper: 1 eth = 5500 usdc
 
 const ETH = 10 ** 18
+const Q96 = 2 ** 96
 const ETH_AMOUNT = 1 * ETH
 const USDC_AMOUNT = 5000 * ETH
 const CURRENT_PRICE = 5000
 const MIN_PRICE = 4545
 const MAX_PRICE = 5500
-const Q96 = 2 ** 96
 
 console.log('Calculate current/lower/upper sqrtp ---------------------------')
 
@@ -61,8 +61,8 @@ console.log({
 
 console.log('Calculate ETH(x) and USDC(y) token amount ------------------------------------')
 
-const x = Lf * ((upperSqrtPQ96 - currentSqrtPQ96) / ((upperSqrtPQ96 * currentSqrtPQ96) / Q96))
-const y = Lf * ((currentSqrtPQ96 - lowerSqrtPQ96) / Q96)
+const x = Math.floor(Lf * ((upperSqrtPQ96 - currentSqrtPQ96) / ((upperSqrtPQ96 * currentSqrtPQ96) / Q96)))
+const y = Math.floor(Lf * ((currentSqrtPQ96 - lowerSqrtPQ96) / Q96))
 
 console.log({
   x,
@@ -72,14 +72,24 @@ console.log({
 console.log('Calculate first transaction ------------------------------------')
 
 const AMOUNT_IN = 42
-const amountInP = (AMOUNT_IN * Q96) / Lf
-const newPriceQ96 = currentSqrtP + amountInP
+const AMOUNT_IN_ETH = AMOUNT_IN * ETH
+const amountInPQ96 = (AMOUNT_IN_ETH * Q96) / Lf
+const newPriceQ96 = currentSqrtPQ96 + amountInPQ96
 const newPrice = (newPriceQ96 / Q96) ** 2
+const newTick = Math.floor(getLogBase(newPriceQ96 / Q96, Math.sqrt(1.0001)))
+const usdcIn = Math.floor(Lf * ((newPriceQ96 - currentSqrtPQ96) / Q96)) / ETH // Loss of precision
+const ethOut = Math.floor(Lf * ((newPriceQ96 - currentSqrtPQ96) / ((newPriceQ96 * currentSqrtPQ96) / Q96))) / ETH
+const validateEthOut = ((1 / (newPriceQ96 / Q96)) - (1 / (currentSqrtPQ96 / Q96))) * Lf / ETH
 
 console.log({
-  amountInP,
+  AMOUNT_IN,
+  amountInPQ96,
   newPriceQ96,
   newPrice,
+  newTick,
+  usdcIn,
+  ethOut,
+  validateEthOut,
 })
 
 // util
