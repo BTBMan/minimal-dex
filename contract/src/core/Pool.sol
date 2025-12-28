@@ -2,15 +2,16 @@
 pragma solidity ^0.8.27;
 
 /* Imports *******/
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /* Events ********/
 
 /* Errors ********/
 
 /* Interfaces ****/
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPool} from "../interfaces/IPool.sol";
 import {IMintCallback} from "../interfaces/callback/IMintCallback.sol";
+import {ISwapCallback} from "../interfaces/callback/ISwapCallback.sol";
 
 /* Libraries *****/
 import {Tick} from "../libraries/Tick.sol";
@@ -146,6 +147,41 @@ contract Pool is IPool {
         }
 
         emit Mint(msg.sender, owner, tickLower, tickUpper, amount, amount0, amount1);
+    }
+
+    /**
+     * @notice Swap tokens
+     * @param recipient The recipient of the tokens
+     */
+    function swap(address recipient) external returns (int256 amount0, int256 amount1) {
+        // Hardcode variables
+        int24 nextTick = 85184;
+        uint160 nextPrice = 5604469350942327889444743441197;
+
+        amount0 = -0.008396714242162444 ether;
+        amount1 = 42 ether;
+
+        // Update slot0
+        (slot0.tick, slot0.sqrtPriceX96) = (nextTick, nextPrice);
+
+        // Send token to recipient
+        // forge-lint: disable-next-line(unsafe-typecast)
+        bool success = IERC20(token0).transfer(recipient, uint256(-amount0)); // ETH
+        if (!success) {
+            revert SwapFailed();
+        }
+
+        uint256 balance1Before = balance1();
+
+        // Transfer the token provided by the user to the contract
+        ISwapCallback(msg.sender).swapCallback(amount0, amount1);
+
+        // Validate
+        if (balance1Before + uint256(amount1) < balance1()) {
+            revert InsufficientInputAmount();
+        }
+
+        emit Swap(msg.sender, recipient, amount0, amount1, slot0.sqrtPriceX96, liquidity, slot0.tick);
     }
 
     // External view  //////////////////

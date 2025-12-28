@@ -9,11 +9,11 @@ import {Pool} from "../src/core/Pool.sol";
 /* Interfaces ****/
 import {IPoolTest} from "./interfaces/IPoolTest.sol";
 import {IMintCallback} from "../src/interfaces/callback/IMintCallback.sol";
+import {ISwapCallback} from "../src/interfaces/callback/ISwapCallback.sol";
 
 /* Libraries *****/
-import {Position} from "../src/libraries/Position.sol";
 
-contract PoolTest is Test, IPoolTest, IMintCallback {
+contract PoolTest is Test, IPoolTest, IMintCallback, ISwapCallback {
     Pool public pool;
     ERC20Mock public token0; // ETH
     ERC20Mock public token1; // USDC
@@ -53,6 +53,16 @@ contract PoolTest is Test, IPoolTest, IMintCallback {
             // The msg.sender is the pool contract
             token0.transfer(msg.sender, amount0);
             token1.transfer(msg.sender, amount1);
+        }
+    }
+
+    function swapCallback(int256 amount0, int256 amount1) external override {
+        // The msg.sender is the pool contract, only one of these tokens can be transferred
+        if (amount0 > 0) {
+            token0.transfer(msg.sender, uint256(amount0));
+        }
+        if (amount1 > 0) {
+            token1.transfer(msg.sender, uint256(amount1));
         }
     }
 
@@ -102,5 +112,48 @@ contract PoolTest is Test, IPoolTest, IMintCallback {
         // Liquidity
         uint128 liquidity = pool.liquidity();
         assertEq(liquidity, poolParams.liquidity);
+    }
+
+    function testSwapBuyETH() public {
+        PoolParams memory poolParams = PoolParams({
+            wethBalance: 0.99897661834742528 ether,
+            // wethBalance: 1 ether,
+            usdcBalance: 5000 ether,
+            tickCurrent: 85176,
+            tickLower: 84222,
+            tickUpper: 86129,
+            liquidity: 1517882343751509868544,
+            currentSqrtP: 5602277097478614198912276234240,
+            shouldTransferInCallback: true,
+            mintLiquidity: true
+        });
+
+        // Balance
+        (uint256 poolBalance0, uint256 poolBalance1) = setupTestCase(poolParams);
+
+        // Mint 42 USDC to the test contract
+        token1.mint(address(this), 42 ether);
+
+        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
+
+        // Swap
+        (int256 amount0Delta, int256 amount1Delta) = pool.swap(address(this));
+
+        // Check swap amount
+        assertEq(amount0Delta, -0.008396714242162444 ether);
+        assertEq(amount1Delta, 42 ether);
+
+        // Check user(the test contract) balance
+        assertEq(token0.balanceOf(address(this)), uint256(userBalance0Before - amount0Delta));
+        assertEq(token1.balanceOf(address(this)), 0);
+
+        // Check pool balance
+        assertEq(token0.balanceOf((address(pool))), uint256(int256(poolBalance0) + amount0Delta));
+        assertEq(token1.balanceOf((address(pool))), uint256(int256(poolBalance1) + amount1Delta));
+
+        // Check sqrtPrice and tick
+        (uint160 sqrtPriceX96, int24 tick) = pool.slot0();
+        assertEq(sqrtPriceX96, 5604469350942327889444743441197);
+        assertEq(tick, 85184);
     }
 }

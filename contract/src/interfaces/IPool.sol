@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Position} from "./../libraries/Position.sol";
-
 interface IPool {
     ////////////////////////////////////
     // Type declarations              //
@@ -26,12 +24,23 @@ interface IPool {
         uint256 amount1
     );
 
+    event Swap(
+        address indexed sender,
+        address indexed recipient,
+        int256 amount0,
+        int256 amount1,
+        uint160 sqrtPriceX96,
+        uint128 liquidity,
+        int24 tick
+    );
+
     ////////////////////////////////////
     // Errors                         //
     ////////////////////////////////////
     error InvalidTickRange();
     error ZeroLiquidity();
     error InsufficientInputAmount();
+    error SwapFailed();
 
     ////////////////////////////////////
     // External functions             //

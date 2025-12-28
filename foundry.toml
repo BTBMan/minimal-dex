@@ -11,3 +11,7 @@ remappings = [ "@openzeppelin/contracts/=contract/lib/openzeppelin-contracts/con
 
 [lint]
 exclude_lints = [ "screaming-snake-case-immutable" ]
+ignore = [
+  "contract/test/**/*",
+  "contract/script/**/*"
+]
