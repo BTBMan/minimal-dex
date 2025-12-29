@@ -12,11 +12,11 @@ pragma solidity ^0.8.27;
 /* Libraries *****/
 
 /**
- * @title PoolManager
+ * @title PoolDeployer
  * @author BTBMan
  * @notice This is a contract
  */
-contract PoolManager {
+contract PoolDeployer {
     ////////////////////////////////////
     // Type declarations              //
     ////////////////////////////////////
