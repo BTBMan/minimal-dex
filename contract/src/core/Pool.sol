@@ -92,8 +92,9 @@ contract Pool is IPool {
      * @param tickLower The lower tick of the position
      * @param tickUpper The upper tick of the position
      * @param amount The amount of liquidity to provide
+     * @param data Data to be passed to the callback function
      */
-    function mint(address owner, int24 tickLower, int24 tickUpper, uint128 amount)
+    function mint(address owner, int24 tickLower, int24 tickUpper, uint128 amount, bytes calldata data)
         external
         returns (uint256 amount0, uint256 amount1)
     {
@@ -136,7 +137,7 @@ contract Pool is IPool {
         // Transferring, use contract callback function to execute
         // Can not let user transfer directly cuz we don't trust user
         // We should deployed a contract that implements callback function we defined
-        IMintCallback(msg.sender).mintCallback(amount0, amount1);
+        IMintCallback(msg.sender).mintCallback(amount0, amount1, data);
 
         // Validate balance after transfer
         if (amount0 > 0 && balance0Before + amount0 > balance0()) {
@@ -152,8 +153,9 @@ contract Pool is IPool {
     /**
      * @notice Swap tokens
      * @param recipient The recipient of the tokens
+     * @param data Data to be passed to the callback function
      */
-    function swap(address recipient) external returns (int256 amount0, int256 amount1) {
+    function swap(address recipient, bytes calldata data) external returns (int256 amount0, int256 amount1) {
         // Hardcode variables
         int24 nextTick = 85184;
         uint160 nextPrice = 5604469350942327889444743441197;
@@ -174,7 +176,7 @@ contract Pool is IPool {
         uint256 balance1Before = balance1();
 
         // Transfer the token provided by the user to the contract
-        ISwapCallback(msg.sender).swapCallback(amount0, amount1);
+        ISwapCallback(msg.sender).swapCallback(amount0, amount1, data);
 
         // Validate
         if (balance1Before + uint256(amount1) < balance1()) {

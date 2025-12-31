@@ -10,6 +10,8 @@ import {Pool} from "../src/core/Pool.sol";
 import {IPoolTest} from "./interfaces/IPoolTest.sol";
 import {IMintCallback} from "../src/interfaces/callback/IMintCallback.sol";
 import {ISwapCallback} from "../src/interfaces/callback/ISwapCallback.sol";
+import {INonfungiblePositionManager} from "./../src/interfaces/INonfungiblePositionManager.sol";
+import {ISwapRouter} from "./../src/interfaces/ISwapRouter.sol";
 
 /* Libraries *****/
 
@@ -36,6 +38,10 @@ contract PoolTest is Test, IPoolTest, IMintCallback, ISwapCallback {
         token0.mint(address(this), poolParams.wethBalance);
         token1.mint(address(this), poolParams.usdcBalance);
 
+        // Approve tokens to the current test contract
+        token0.approve(address(this), poolParams.wethBalance);
+        token1.approve(address(this), poolParams.usdcBalance);
+
         // Create pool
         pool = new Pool(address(token0), address(token1), poolParams.currentSqrtP, poolParams.tickCurrent);
 
@@ -43,26 +49,38 @@ contract PoolTest is Test, IPoolTest, IMintCallback, ISwapCallback {
 
         // Mint liquidity if necessary
         if (poolParams.mintLiquidity) {
-            (poolBalance0, poolBalance1) =
-                pool.mint(address(this), poolParams.tickLower, poolParams.tickUpper, poolParams.liquidity);
+            (poolBalance0, poolBalance1) = pool.mint(
+                address(this),
+                poolParams.tickLower,
+                poolParams.tickUpper,
+                poolParams.liquidity,
+                abi.encode(token0, token1, address(this))
+            );
         }
     }
 
-    function mintCallback(uint256 amount0, uint256 amount1) external override {
+    function mintCallback(uint256 amount0, uint256 amount1, bytes calldata data) external override {
         if (shouldTransferInCallback) {
+            INonfungiblePositionManager.MintCallbackData memory extra =
+                abi.decode(data, (INonfungiblePositionManager.MintCallbackData));
+
             // The msg.sender is the pool contract
-            token0.transfer(msg.sender, amount0);
-            token1.transfer(msg.sender, amount1);
+            // Transfer the tokens from the payer to the pool
+            token0.transferFrom(extra.payer, msg.sender, amount0);
+            token1.transferFrom(extra.payer, msg.sender, amount1);
         }
     }
 
-    function swapCallback(int256 amount0, int256 amount1) external override {
+    function swapCallback(int256 amount0, int256 amount1, bytes calldata data) external override {
+        ISwapRouter.SwapCallbackData memory extra = abi.decode(data, (ISwapRouter.SwapCallbackData));
+
         // The msg.sender is the pool contract, only one of these tokens can be transferred
+        // Transfer the tokens from the payer to the pool
         if (amount0 > 0) {
-            token0.transfer(msg.sender, uint256(amount0));
+            token0.transferFrom(extra.payer, msg.sender, uint256(amount0));
         }
         if (amount1 > 0) {
-            token1.transfer(msg.sender, uint256(amount1));
+            token1.transferFrom(extra.payer, msg.sender, uint256(amount1));
         }
     }
 
@@ -134,10 +152,13 @@ contract PoolTest is Test, IPoolTest, IMintCallback, ISwapCallback {
         // Mint 42 USDC to the test contract
         token1.mint(address(this), 42 ether);
 
+        // Approve tokens to the current test contract
+        token1.approve(address(this), 42 ether);
+
         int256 userBalance0Before = int256(token0.balanceOf(address(this)));
 
         // Swap
-        (int256 amount0Delta, int256 amount1Delta) = pool.swap(address(this));
+        (int256 amount0Delta, int256 amount1Delta) = pool.swap(address(this), abi.encode(token0, token1, address(this)));
 
         // Check swap amount
         assertEq(amount0Delta, -0.008396714242162444 ether);

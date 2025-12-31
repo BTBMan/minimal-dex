@@ -8,6 +8,7 @@ pragma solidity ^0.8.27;
 /* Errors ********/
 
 /* Interfaces ****/
+import {IPoolDeployer} from "../interfaces/IPoolDeployer.sol";
 
 /* Libraries *****/
 
@@ -16,7 +17,7 @@ pragma solidity ^0.8.27;
  * @author BTBMan
  * @notice This is a contract
  */
-contract PoolDeployer {
+contract PoolDeployer is IPoolDeployer {
     ////////////////////////////////////
     // Type declarations              //
     ////////////////////////////////////

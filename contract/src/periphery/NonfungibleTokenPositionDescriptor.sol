@@ -8,15 +8,16 @@ pragma solidity ^0.8.27;
 /* Errors ********/
 
 /* Interfaces ****/
+import {INonfungibleTokenPositionDescriptor} from "../interfaces/INonfungibleTokenPositionDescriptor.sol";
 
 /* Libraries *****/
 
 /**
- * @title  NonfungiblePositionManager
+ * @title  NonfungibleTokenPositionDescriptor
  * @author BTBMan
- * @notice This is a NonfungiblePositionManager Contract
+ * @notice This is a NonfungibleTokenPositionDescriptor Contract
  */
-contract NonfungiblePositionManager {
+contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescriptor {
     ////////////////////////////////////
     // Type declarations              //
     ////////////////////////////////////
