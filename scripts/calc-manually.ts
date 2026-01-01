@@ -92,6 +92,25 @@ console.log({
   validateEthOut,
 })
 
+console.log('Calculate second transaction ------------------------------------')
+
+const AMOUNT_IN_2 = 0.01337337
+const AMOUNT_IN_ETH_2 = AMOUNT_IN_2 * ETH
+const newPriceQ96_2 = (((currentSqrtPQ96 * Lf * Q96)) / ((AMOUNT_IN_ETH_2 * currentSqrtPQ96) + Lf * Q96))
+const newPrice_2 = (newPriceQ96_2 / Q96) ** 2
+const newTick_2 = Math.floor(getLogBase(newPriceQ96_2 / Q96, Math.sqrt(1.0001)))
+const ethIn_2 = Math.floor(Lf * ((currentSqrtPQ96 - newPriceQ96_2) / ((newPriceQ96_2 * currentSqrtPQ96) / Q96))) / ETH
+const usdcOut_2 = Math.floor(Lf * ((currentSqrtPQ96 - newPriceQ96_2) / Q96)) / ETH // Loss of precision
+
+console.log({
+  AMOUNT_IN_2,
+  newPriceQ96_2,
+  newPrice_2,
+  newTick_2,
+  ethIn_2,
+  usdcOut_2,
+})
+
 // util
 function getLogBase(n: number, b: number) {
   // log_b(n) = log_e(n) / log_e(b)
