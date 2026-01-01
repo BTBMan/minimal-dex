@@ -2,7 +2,8 @@
 -include .env.local
 
 # Constants #########################################################
-SIMPLE_STORAGE_SCRIPT := contract/script/SimpleStorage.s.sol:SimpleStorageScript
+SWAP_ROUTER_SCRIPT := contract/script/SwapRouter.s.sol:SwapRouterScript
+NONFUNGIBLE_POSITION_MANAGER_SCRIPT := contract/script/NonfungiblePositionManager.s.sol:NonfungiblePositionManagerScript
 
 NETWORK_ARGS :=
 
@@ -20,6 +21,7 @@ endif
 # Aliases ###########################################################
 build:; forge build
 
-deploy-simple-storage:; @forge script $(SIMPLE_STORAGE_SCRIPT) $(NETWORK_ARGS) && esno scripts/generate-abi.ts $(SIMPLE_STORAGE_SCRIPT)
+deploy-swap-router:; @forge script $(SWAP_ROUTER_SCRIPT) $(NETWORK_ARGS) && esno scripts/generate-abi.ts $(SWAP_ROUTER_SCRIPT)
+deploy-nonfungible-position-manager:; @forge script $(NONFUNGIBLE_POSITION_MANAGER_SCRIPT) $(NETWORK_ARGS) && esno scripts/generate-abi.ts $(NONFUNGIBLE_POSITION_MANAGER_SCRIPT)
 
 test:; @forge test
