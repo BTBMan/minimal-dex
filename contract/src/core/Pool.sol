@@ -16,6 +16,7 @@ import {ISwapCallback} from "../interfaces/callback/ISwapCallback.sol";
 /* Libraries *****/
 import {Tick} from "../libraries/Tick.sol";
 import {Position} from "../libraries/Position.sol";
+import {TickBitmap} from "../libraries/TickBitmap.sol";
 
 /**
  * @title Pool
@@ -29,6 +30,7 @@ contract Pool is IPool {
     using Tick for mapping(int24 tick => Tick.Info);
     using Position for mapping(bytes32 tick => Position.Info);
     using Position for Position.Info;
+    using TickBitmap for mapping(int16 word => uint256 tick);
 
     ////////////////////////////////////
     // State variables                //
@@ -52,6 +54,8 @@ contract Pool is IPool {
     // Positions info
     // Position key is the bytes32 keccak256(owner, tickLower, tickUpper)
     mapping(bytes32 => Position.Info) public positions;
+    // Tick bitmap
+    mapping(int16 word => uint256 tick) public tickBitmap;
 
     ////////////////////////////////////
     // Events                         //
@@ -112,8 +116,16 @@ contract Pool is IPool {
         liquidity += amount;
 
         // Update tick info
-        ticks.update(tickLower, amount);
-        ticks.update(tickUpper, amount);
+        bool flippedLower = ticks.update(tickLower, amount);
+        bool flippedUpper = ticks.update(tickUpper, amount);
+
+        // Update tick bitmap liquidity
+        if (flippedLower) {
+            tickBitmap.flipTick(tickLower, 1);
+        }
+        if (flippedUpper) {
+            tickBitmap.flipTick(tickUpper, 1);
+        }
 
         // Update position info
         Position.Info storage position = positions.get(owner, tickLower, tickUpper);

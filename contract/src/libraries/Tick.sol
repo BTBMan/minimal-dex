@@ -17,7 +17,10 @@ library Tick {
         uint128 liquidity;
     }
 
-    function update(mapping(int24 tick => Info) storage self, int24 tick, uint128 liquidityDelta) internal {
+    function update(mapping(int24 tick => Info) storage self, int24 tick, uint128 liquidityDelta)
+        internal
+        returns (bool flipped)
+    {
         Info storage tickInfo = self[tick]; // Get current tick info
 
         uint128 liquidityBefore = tickInfo.liquidity;
@@ -30,5 +33,6 @@ library Tick {
         }
 
         tickInfo.liquidity = liquidityAfter; // Update current tick liquidity
+        flipped = (liquidityBefore == 0) != (liquidityAfter == 0); // flipped if add liquidity to an empty tick or remove all liquidity from a non-empty tick
     }
 }
