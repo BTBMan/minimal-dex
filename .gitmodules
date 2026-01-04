@@ -7,3 +7,4 @@
 [submodule "contract/lib/prb-math"]
 	path = contract/lib/prb-math
 	url = https://github.com/PaulRBerg/prb-math
+	branch = release-v4

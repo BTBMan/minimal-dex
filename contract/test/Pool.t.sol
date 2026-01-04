@@ -84,6 +84,17 @@ contract PoolTest is Test, IPoolTest, IMintCallback, ISwapCallback {
         }
     }
 
+    function testMath() public {
+        uint256 a = 2;
+        uint256 b = 3;
+        uint256 c = 4;
+
+        // uint256 result = mulDiv(a, b, c);
+        // console.log(result);
+        // console.log(ceil(d));
+        // console.log(a / b);
+    }
+
     function testMintSuccess() public {
         PoolParams memory poolParams = PoolParams({
             wethBalance: 0.99897661834742528 ether,
