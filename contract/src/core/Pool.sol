@@ -17,6 +17,8 @@ import {ISwapCallback} from "../interfaces/callback/ISwapCallback.sol";
 import {Tick} from "../libraries/Tick.sol";
 import {Position} from "../libraries/Position.sol";
 import {TickBitmap} from "../libraries/TickBitmap.sol";
+import {SqrtPriceMath} from "./../libraries/SqrtPriceMath.sol";
+import {TickMath} from "./../libraries/TickMath.sol";
 
 /**
  * @title Pool
@@ -131,9 +133,11 @@ contract Pool is IPool {
         Position.Info storage position = positions.get(owner, tickLower, tickUpper);
         position.update(amount);
 
-        // Hardcode amount0 and amount1 for now
-        amount0 = 0.99897661834742528 ether;
-        amount1 = 5000 ether;
+        // Calculate amount0 and amount1
+        amount0 =
+            SqrtPriceMath.getAmount0Delta(slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickUpper), amount, true);
+        amount1 =
+            SqrtPriceMath.getAmount1Delta(slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickLower), amount, true);
 
         // Get token from user
         uint256 balance0Before;

@@ -33,16 +33,38 @@ library SqrtPriceMath {
         // B must greater that A
         if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
 
-        // Formula: x = L * ((sqrt(upper) - sqrt(lower)) / (sqrt(upper) * sqrt(lower)))
-        uint256 numerator1 = uint256(liquidity >> FixedPoint96.RESOLUTION);
+        uint256 numerator1 = uint256(liquidity >> FixedPoint96.RESOLUTION); // EQ: L * 2^96
         uint256 numerator2 = uint256(sqrtRatioBX96 - sqrtRatioAX96);
 
+        // Denominator must be greater than 0
         if (sqrtRatioAX96 <= 0) {
             revert SqrtPriceMath__InvalidSqrtRatio();
         }
 
+        // Formula: x = L * ((sqrt(upper) - sqrt(lower)) / (sqrt(upper) * sqrt(lower)))
         amount0 = roundUp
             ? UnsafeMath.divRoundingUp(FullMath.mulDivRoundingUp(numerator1, numerator2, sqrtRatioBX96), sqrtRatioAX96)
-            : mulDiv(numerator1, numerator2, sqrtRatioBX96) / sqrtRatioAX96;
+            : FullMath.mulDivRoundingUp(numerator1, numerator2, sqrtRatioBX96) / sqrtRatioAX96;
+    }
+
+    /**
+     * @notice Calculate the amount1 delta between two prices
+     * @param sqrtRatioAX96 The square root of the price A
+     * @param sqrtRatioBX96 The square root of the price B
+     * @param liquidity The amount of liquidity
+     * @param roundUp Whether to round up or down
+     */
+    function getAmount1Delta(uint160 sqrtRatioAX96, uint160 sqrtRatioBX96, uint128 liquidity, bool roundUp)
+        internal
+        pure
+        returns (uint256 amount1)
+    {
+        // B must greater that A
+        if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+
+        // Formula: y = L * (sqrt(upper) - sqrt(lower))
+        amount1 = roundUp
+            ? FullMath.mulDivRoundingUp(uint256(liquidity), sqrtRatioBX96 - sqrtRatioAX96, FixedPoint96.Q96)
+            : mulDiv(uint256(liquidity), sqrtRatioBX96 - sqrtRatioAX96, FixedPoint96.Q96);
     }
 }
