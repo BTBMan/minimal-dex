@@ -37,7 +37,7 @@ library TickBitmap {
 
     /**
      * @notice Get the next tick with liquidity within one word
-     * @param self The mapping of word position to tick
+     * @param self The word position to tick mapping
      * @param tick The current tick
      * @param tickSpacing The tick spacing
      * @param lte Whether to find the next tick less than or equal to the current tick

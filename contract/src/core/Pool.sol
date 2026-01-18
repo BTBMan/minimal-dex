@@ -19,6 +19,7 @@ import {Position} from "../libraries/Position.sol";
 import {TickBitmap} from "../libraries/TickBitmap.sol";
 import {SqrtPriceMath} from "./../libraries/SqrtPriceMath.sol";
 import {TickMath} from "./../libraries/TickMath.sol";
+import {SwapMath} from "./../libraries/SwapMath.sol";
 
 /**
  * @title Pool
@@ -40,6 +41,7 @@ contract Pool is IPool {
     // Min/Max tick
     int24 internal constant MIN_TICK = -887272;
     int24 internal constant MAX_TICK = -MIN_TICK;
+    int24 internal constant TICK_SPACING = 1;
 
     // Pool tokens
     address public immutable token0;
@@ -123,10 +125,10 @@ contract Pool is IPool {
 
         // Update tick bitmap liquidity
         if (flippedLower) {
-            tickBitmap.flipTick(tickLower, 1);
+            tickBitmap.flipTick(tickLower, TICK_SPACING);
         }
         if (flippedUpper) {
-            tickBitmap.flipTick(tickUpper, 1);
+            tickBitmap.flipTick(tickUpper, TICK_SPACING);
         }
 
         // Update position info
@@ -166,12 +168,69 @@ contract Pool is IPool {
         emit Mint(msg.sender, owner, tickLower, tickUpper, amount, amount0, amount1);
     }
 
+    struct SwapState {
+        // The amount of tokens remaining to be swapped
+        uint256 amountSpecifiedRemaining;
+        // The amount already swapped
+        uint256 amountCalculated;
+        // Current sqrt(price)
+        uint160 sqrtPriceX96;
+        // The tick associated with the current price
+        int24 tick;
+    }
+
+    struct StepComputations {
+        // The price at the beginning of the step
+        uint160 sqrtPriceStartX96;
+        // The next tick to swap to
+        int24 nextTick;
+        // The price for the next tick
+        uint160 sqrtPriceNextX96;
+        // Swap in amount
+        uint256 amountIn;
+        // Swap out amount
+        uint256 amountOut;
+    }
+
     /**
      * @notice Swap tokens
      * @param recipient The recipient of the tokens
+     * @param zeroForOne Whether the swap is token0 for token1
+     * @param amountSpecified Expected amount of the tokens to be sold
      * @param data Data to be passed to the callback function
      */
-    function swap(address recipient, bytes calldata data) external returns (int256 amount0, int256 amount1) {
+    function swap(address recipient, bool zeroForOne, uint256 amountSpecified, bytes calldata data)
+        external
+        returns (int256 amount0, int256 amount1)
+    {
+        Slot0 memory slot0Start = slot0;
+
+        SwapState memory state = SwapState({
+            amountSpecifiedRemaining: amountSpecified,
+            amountCalculated: 0,
+            sqrtPriceX96: slot0Start.sqrtPriceX96,
+            tick: slot0Start.tick
+        });
+
+        while (state.amountSpecifiedRemaining > 0) {
+            StepComputations memory step;
+
+            step.sqrtPriceStartX96 = state.sqrtPriceX96;
+
+            (step.nextTick,) = tickBitmap.nextInitializedTickWithinOneWord(slot0Start.tick, TICK_SPACING, zeroForOne);
+
+            step.sqrtPriceNextX96 = TickMath.getSqrtRatioAtTick(step.nextTick);
+
+            (state.sqrtPriceX96, step.amountIn, step.amountOut) = SwapMath.computeSwapStep(
+                state.sqrtPriceX96, step.sqrtPriceNextX96, liquidity, state.amountSpecifiedRemaining
+            );
+
+            // Update state
+            state.amountSpecifiedRemaining -= step.amountIn;
+            state.amountCalculated += step.amountOut;
+            state.tick = TickMath.getTickAtSqrtRatio(state.sqrtPriceX96);
+        }
+
         // Hardcode variables
         int24 nextTick = 85184;
         uint160 nextPrice = 5604469350942327889444743441197;

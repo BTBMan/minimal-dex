@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.4.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.27;
 
 import "@prb/math/Common.sol";
 

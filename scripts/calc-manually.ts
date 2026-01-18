@@ -73,8 +73,8 @@ console.log('Calculate first transaction ------------------------------------')
 
 const AMOUNT_IN = 42
 const AMOUNT_IN_ETH = AMOUNT_IN * ETH
-const amountInPQ96 = (AMOUNT_IN_ETH * Q96) / Lf
-const newPriceQ96 = currentSqrtPQ96 + amountInPQ96
+const amountInPriceQ96 = (AMOUNT_IN_ETH * Q96) / Lf
+const newPriceQ96 = currentSqrtPQ96 + amountInPriceQ96
 const newPrice = (newPriceQ96 / Q96) ** 2
 const newTick = Math.floor(getLogBase(newPriceQ96 / Q96, Math.sqrt(1.0001)))
 const usdcIn = Math.floor(Lf * ((newPriceQ96 - currentSqrtPQ96) / Q96)) / ETH // Loss of precision
@@ -83,7 +83,7 @@ const validateEthOut = ((1 / (newPriceQ96 / Q96)) - (1 / (currentSqrtPQ96 / Q96)
 
 console.log({
   AMOUNT_IN,
-  amountInPQ96,
+  amountInPriceQ96,
   newPriceQ96,
   newPrice,
   newTick,

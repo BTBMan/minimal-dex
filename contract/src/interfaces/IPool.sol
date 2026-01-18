@@ -56,5 +56,7 @@ interface IPool {
     function mint(address owner, int24 tickLower, int24 tickUpper, uint128 amount, bytes calldata data)
         external
         returns (uint256 amount0, uint256 amount1);
-    function swap(address recipient, bytes calldata data) external returns (int256 amount0, int256 amount1);
+    function swap(address recipient, bool zeroForOne, uint256 amountSpecified, bytes calldata data)
+        external
+        returns (int256 amount0, int256 amount1);
 }
