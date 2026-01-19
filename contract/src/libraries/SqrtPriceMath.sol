@@ -11,9 +11,9 @@ pragma solidity ^0.8.27;
 
 /* Libraries *****/
 import "@prb/math/Common.sol";
-import {FixedPoint96} from "../libraries/FixedPoint96.sol";
-import {UnsafeMath} from "../libraries/UnsafeMath.sol";
-import {FullMath} from "../libraries/FullMath.sol";
+import {FixedPoint96} from "./FixedPoint96.sol";
+import {UnsafeMath} from "./UnsafeMath.sol";
+import {FullMath} from "./FullMath.sol";
 
 library SqrtPriceMath {
     error SqrtPriceMath__InvalidSqrtRatio();
@@ -85,6 +85,7 @@ library SqrtPriceMath {
      * @param sqrtRatioBX96 The square root of the price B
      * @param liquidity The amount of liquidity
      * @param roundUp Whether to round up or down
+     * @return amount0 The amount of token0
      */
     function getAmount0Delta(uint160 sqrtRatioAX96, uint160 sqrtRatioBX96, uint128 liquidity, bool roundUp)
         internal
@@ -94,8 +95,8 @@ library SqrtPriceMath {
         // B must greater that A
         if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
 
-        uint256 numerator1 = uint256(liquidity >> FixedPoint96.RESOLUTION); // EQ: L * 2^96
-        uint256 numerator2 = uint256(sqrtRatioBX96 - sqrtRatioAX96);
+        uint256 numerator1 = uint256(liquidity) << FixedPoint96.RESOLUTION; // EQ: L * 2^96
+        uint256 numerator2 = sqrtRatioBX96 - sqrtRatioAX96;
 
         // Denominator must be greater than 0
         if (sqrtRatioAX96 <= 0) {
@@ -105,7 +106,7 @@ library SqrtPriceMath {
         // Formula: x = L * ((sqrt(upper) - sqrt(lower)) / (sqrt(upper) * sqrt(lower)))
         amount0 = roundUp
             ? UnsafeMath.divRoundingUp(FullMath.mulDivRoundingUp(numerator1, numerator2, sqrtRatioBX96), sqrtRatioAX96)
-            : FullMath.mulDivRoundingUp(numerator1, numerator2, sqrtRatioBX96) / sqrtRatioAX96;
+            : mulDiv(numerator1, numerator2, sqrtRatioBX96) / sqrtRatioAX96;
     }
 
     /**
@@ -114,6 +115,7 @@ library SqrtPriceMath {
      * @param sqrtRatioBX96 The square root of the price B
      * @param liquidity The amount of liquidity
      * @param roundUp Whether to round up or down
+     * @return amount1 The amount of token1
      */
     function getAmount1Delta(uint160 sqrtRatioAX96, uint160 sqrtRatioBX96, uint128 liquidity, bool roundUp)
         internal

@@ -116,6 +116,8 @@ contract Pool is IPool {
             revert ZeroLiquidity();
         }
 
+        Slot0 memory _slot0 = slot0;
+
         // Update liquidity
         liquidity += amount;
 
@@ -137,9 +139,9 @@ contract Pool is IPool {
 
         // Calculate amount0 and amount1
         amount0 =
-            SqrtPriceMath.getAmount0Delta(slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickUpper), amount, true);
+            SqrtPriceMath.getAmount0Delta(_slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickUpper), amount, true);
         amount1 =
-            SqrtPriceMath.getAmount1Delta(slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickLower), amount, true);
+            SqrtPriceMath.getAmount1Delta(_slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickLower), amount, true);
 
         // Get token from user
         uint256 balance0Before;
