@@ -103,9 +103,6 @@ contract PoolTest is Test, IPoolTest, IMintCallback, ISwapCallback {
         uint256 expectedAmount0 = 0.998628802115141959 ether;
         uint256 expectedAmount1 = 5000.2091909204895241 ether;
 
-        console.log("poolBalance0", poolBalance0);
-        console.log("poolBalance1", poolBalance1);
-
         assertEq(poolBalance0, expectedAmount0, "Incorrect token0 deposited amount");
         assertEq(poolBalance1, expectedAmount1, "Incorrect token1 deposited amount");
 
