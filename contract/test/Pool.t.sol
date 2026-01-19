@@ -86,14 +86,13 @@ contract PoolTest is Test, IPoolTest, IMintCallback, ISwapCallback {
 
     function testMintSuccess() public {
         PoolParams memory poolParams = PoolParams({
-            wethBalance: 0.99897661834742528 ether,
-            // wethBalance: 1 ether,
-            usdcBalance: 5000 ether,
+            wethBalance: 1 ether,
+            usdcBalance: 5001 ether,
             tickCurrent: 85176,
             tickLower: 84222,
             tickUpper: 86129,
             liquidity: 1517882343751509868544,
-            currentSqrtP: 5602277097478614198912276234240,
+            currentSqrtP: 5602277097478614198912276234240, // ≈ (1 ETH = 5000 USDC)
             shouldTransferInCallback: true,
             mintLiquidity: true
         });
@@ -101,11 +100,17 @@ contract PoolTest is Test, IPoolTest, IMintCallback, ISwapCallback {
         // Balance
         (uint256 poolBalance0, uint256 poolBalance1) = setupTestCase(poolParams);
 
-        assertEq(poolBalance0, poolParams.wethBalance, "Incorrect token0 deposited amount");
-        assertEq(poolBalance1, poolParams.usdcBalance, "Incorrect token1 deposited amount");
+        uint256 expectedAmount0 = 0.998628802115141959 ether;
+        uint256 expectedAmount1 = 5000.2091909204895241 ether;
 
-        assertEq(token0.balanceOf(address(pool)), poolParams.wethBalance);
-        assertEq(token1.balanceOf(address(pool)), poolParams.usdcBalance);
+        console.log("poolBalance0", poolBalance0);
+        console.log("poolBalance1", poolBalance1);
+
+        assertEq(poolBalance0, expectedAmount0, "Incorrect token0 deposited amount");
+        assertEq(poolBalance1, expectedAmount1, "Incorrect token1 deposited amount");
+
+        assertEq(token0.balanceOf(address(pool)), expectedAmount0);
+        assertEq(token1.balanceOf(address(pool)), expectedAmount1);
 
         // Position
         bytes32 positionKey = keccak256(abi.encodePacked(address(this), poolParams.tickLower, poolParams.tickUpper));
@@ -134,14 +139,13 @@ contract PoolTest is Test, IPoolTest, IMintCallback, ISwapCallback {
 
     function testSwapBuyETH() public {
         PoolParams memory poolParams = PoolParams({
-            wethBalance: 0.99897661834742528 ether,
-            // wethBalance: 1 ether,
-            usdcBalance: 5000 ether,
+            wethBalance: 1 ether,
+            usdcBalance: 5001 ether,
             tickCurrent: 85176,
             tickLower: 84222,
             tickUpper: 86129,
             liquidity: 1517882343751509868544,
-            currentSqrtP: 5602277097478614198912276234240,
+            currentSqrtP: 5602277097478614198912276234240, // ≈ (1 ETH = 5000 USDC)
             shouldTransferInCallback: true,
             mintLiquidity: true
         });
@@ -149,24 +153,28 @@ contract PoolTest is Test, IPoolTest, IMintCallback, ISwapCallback {
         // Balance
         (uint256 poolBalance0, uint256 poolBalance1) = setupTestCase(poolParams);
 
+        uint256 swapAmount = 42 ether;
+
         // Mint 42 USDC to the test contract
-        token1.mint(address(this), 42 ether);
+        token1.mint(address(this), swapAmount);
 
         // Approve tokens to the current test contract
-        token1.approve(address(this), 42 ether);
+        token1.approve(address(this), swapAmount);
 
         int256 userBalance0Before = int256(token0.balanceOf(address(this)));
+        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
 
         // Swap
-        (int256 amount0Delta, int256 amount1Delta) = pool.swap(address(this), abi.encode(token0, token1, address(this)));
+        (int256 amount0Delta, int256 amount1Delta) =
+            pool.swap(address(this), false, swapAmount, abi.encode(token0, token1, address(this)));
 
         // Check swap amount
-        assertEq(amount0Delta, -0.008396714242162444 ether);
-        assertEq(amount1Delta, 42 ether);
+        assertEq(amount0Delta, -0.008396714242162445 ether);
+        assertEq(amount1Delta, int256(swapAmount));
 
         // Check user(the test contract) balance
         assertEq(token0.balanceOf(address(this)), uint256(userBalance0Before - amount0Delta));
-        assertEq(token1.balanceOf(address(this)), 0);
+        assertEq(token1.balanceOf(address(this)), uint256(userBalance1Before - amount1Delta));
 
         // Check pool balance
         assertEq(token0.balanceOf((address(pool))), uint256(int256(poolBalance0) + amount0Delta));
