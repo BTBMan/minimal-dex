@@ -17,6 +17,67 @@ import {FullMath} from "../libraries/FullMath.sol";
 
 library SqrtPriceMath {
     error SqrtPriceMath__InvalidSqrtRatio();
+    error SqrtPriceMath__InvalidLiquidity();
+
+    /**
+     * @notice Calculate the next sqrt price from input
+     * @param sqrtPX96 The current sqrt price, before accounting for the input amount
+     * @param liquidity The amount of liquidity
+     * @param amountIn The amount of tokens remaining to be swapped
+     * @param zeroForOne Whether the swap is zero for one
+     * @return sqrtQX96 The next sqrt price after adding the input amount to token0 or token1
+     */
+    function getNextSqrtPriceFromInput(uint160 sqrtPX96, uint128 liquidity, uint256 amountIn, bool zeroForOne)
+        internal
+        pure
+        returns (uint160 sqrtQX96)
+    {
+        if (sqrtPX96 <= 0) {
+            revert SqrtPriceMath__InvalidSqrtRatio();
+        }
+        if (liquidity <= 0) {
+            revert SqrtPriceMath__InvalidLiquidity();
+        }
+
+        return zeroForOne
+            ? getNextSqrtPriceFromAmount0RoundingUp(sqrtPX96, liquidity, amountIn)
+            : getNextSqrtPriceFromAmount1RoundingDown(sqrtPX96, liquidity, amountIn);
+    }
+
+    /**
+     * @notice Calculate the next sqrt price from the delta of token0
+     */
+    function getNextSqrtPriceFromAmount0RoundingUp(uint160 sqrtPX96, uint128 liquidity, uint256 amount)
+        internal
+        pure
+        returns (uint160)
+    {
+        uint256 numerator = uint256(liquidity) << FixedPoint96.RESOLUTION;
+        uint256 denominator;
+        bool overflow;
+
+        unchecked {
+            uint256 product = amount * sqrtPX96;
+            if ((product / amount != sqrtPX96) || ((denominator = numerator + product) < numerator)) overflow = true;
+        }
+
+        if (!overflow) {
+            return uint160(FullMath.mulDivRoundingUp(numerator, sqrtPX96, denominator));
+        }
+
+        return uint160(UnsafeMath.divRoundingUp(numerator, (numerator / sqrtPX96) + amount));
+    }
+
+    /**
+     * @notice Calculate the next sqrt price from the delta of token1
+     */
+    function getNextSqrtPriceFromAmount1RoundingDown(uint160 sqrtPX96, uint128 liquidity, uint256 amount)
+        internal
+        pure
+        returns (uint160)
+    {
+        return sqrtPX96 + uint160((amount << FixedPoint96.RESOLUTION) / liquidity);
+    }
 
     /**
      * @notice Calculate the amount0 delta between two prices

@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import {SqrtPriceMath} from "./SqrtPriceMath.sol";
+
 library SwapMath {
     /**
-     * @notice Compute the next sqrt price in the swap
+     * @notice Compute the next sqrt price and token amountIn/amountOut in the swap
      * @param sqrtPriceCurrentX96 The current sqrt price
      * @param sqrtPriceTargetX96 The target sqrt price
      * @param liquidity The usable liquidity
@@ -20,5 +22,12 @@ library SwapMath {
     ) internal pure returns (uint160 sqrtPriceNextX96, uint256 amountIn, uint256 amountOut) {
         // Determine the direction of the swap
         bool zeroForOne = sqrtPriceCurrentX96 >= sqrtPriceTargetX96;
+
+        sqrtPriceNextX96 =
+            SqrtPriceMath.getNextSqrtPriceFromInput(sqrtPriceCurrentX96, liquidity, amountRemaining, zeroForOne);
+        amountIn = SqrtPriceMath.getAmount0Delta(sqrtPriceCurrentX96, sqrtPriceNextX96, liquidity, true);
+        amountOut = SqrtPriceMath.getAmount1Delta(sqrtPriceCurrentX96, sqrtPriceNextX96, liquidity, true);
+
+        if (!zeroForOne) (amountIn, amountOut) = (amountOut, amountIn);
     }
 }
