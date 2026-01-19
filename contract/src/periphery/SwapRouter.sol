@@ -50,11 +50,11 @@ contract SwapRouter is ISwapRouter, ISwapCallback {
     ////////////////////////////////////
     // External functions             //
     ////////////////////////////////////
-    function swap(address poolAddress, bytes calldata data) external override {
-        Pool(poolAddress).swap(msg.sender, data);
-    }
+    // function swap(address poolAddress, bool zeroForOne, bytes calldata data) external {
+    //     Pool(poolAddress).swap(msg.sender, data);
+    // }
 
-    function swapCallback(int256 amount0, int256 amount1, bytes calldata data) external override {
+    function swapCallback(int256 amount0, int256 amount1, bytes calldata data) external {
         SwapCallbackData memory extra = abi.decode(data, (SwapCallbackData));
 
         // The msg.sender is the pool contract, only one of these tokens can be transferred

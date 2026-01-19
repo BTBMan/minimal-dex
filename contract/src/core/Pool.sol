@@ -231,31 +231,49 @@ contract Pool is IPool {
             state.tick = TickMath.getTickAtSqrtRatio(state.sqrtPriceX96);
         }
 
-        // Hardcode variables
-        int24 nextTick = 85184;
-        uint160 nextPrice = 5604469350942327889444743441197;
-
-        amount0 = -0.008396714242162444 ether;
-        amount1 = 42 ether;
+        // Update token amounts
+        (amount0, amount1) = zeroForOne
+            ? (int256(amountSpecified - state.amountSpecifiedRemaining), -int256(state.amountCalculated))
+            : (-int256(state.amountCalculated), int256(amountSpecified - state.amountSpecifiedRemaining));
 
         // Update slot0
-        (slot0.tick, slot0.sqrtPriceX96) = (nextTick, nextPrice);
-
-        // Send token to recipient
-        // forge-lint: disable-next-line(unsafe-typecast)
-        bool success = IERC20(token0).transfer(recipient, uint256(-amount0)); // ETH
-        if (!success) {
-            revert SwapFailed();
+        if (state.tick != slot0Start.tick) {
+            (slot0.tick, slot0.sqrtPriceX96) = (state.tick, state.sqrtPriceX96);
         }
 
-        uint256 balance1Before = balance1();
+        // Send token to recipient
+        if (zeroForOne) {
+            // forge-lint: disable-next-line(unsafe-typecast)
+            bool success = IERC20(token1).transfer(recipient, uint256(-amount1));
+            if (!success) {
+                revert SwapFailed();
+            }
 
-        // Transfer the token provided by the user to the contract
-        ISwapCallback(msg.sender).swapCallback(amount0, amount1, data);
+            uint256 balance0Before = balance0();
 
-        // Validate
-        if (balance1Before + uint256(amount1) < balance1()) {
-            revert InsufficientInputAmount();
+            // Transfer the token provided by the user(token0) to the contract
+            ISwapCallback(msg.sender).swapCallback(amount0, amount1, data);
+
+            // Validate
+            if (balance0Before + uint256(amount0) < balance0()) {
+                revert InsufficientInputAmount();
+            }
+        } else {
+            // forge-lint: disable-next-line(unsafe-typecast)
+            bool success = IERC20(token0).transfer(recipient, uint256(-amount0));
+            if (!success) {
+                revert SwapFailed();
+            }
+
+            uint256 balance1Before = balance1();
+
+            // Transfer the token provided by the user(token1) to the contract
+            ISwapCallback(msg.sender).swapCallback(amount0, amount1, data);
+
+            // Validate
+            if (balance1Before + uint256(amount1) < balance1()) {
+                revert InsufficientInputAmount();
+            }
         }
 
         emit Swap(msg.sender, recipient, amount0, amount1, slot0.sqrtPriceX96, liquidity, slot0.tick);
