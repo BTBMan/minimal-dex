@@ -63,13 +63,13 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
         Pool(poolAddress).mint(msg.sender, tickLower, tickUpper, liquidity, data);
     }
 
-    function mintCallback(uint256 amount0, uint256 amount1, bytes calldata data) external {
+    function mintCallback(uint256 amount0Owed, uint256 amount1Owed, bytes calldata data) external {
         MintCallbackData memory extra = abi.decode(data, (MintCallbackData));
 
         // The msg.sender is the pool contract
         // Transfer the tokens from the payer to the pool
-        IERC20(extra.token0).transferFrom(extra.payer, msg.sender, amount0);
-        IERC20(extra.token1).transferFrom(extra.payer, msg.sender, amount1);
+        IERC20(extra.token0).transferFrom(extra.payer, msg.sender, amount0Owed);
+        IERC20(extra.token1).transferFrom(extra.payer, msg.sender, amount1Owed);
     }
 
     // External view  //////////////////
