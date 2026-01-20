@@ -118,9 +118,6 @@ contract Pool is IPool {
 
         Slot0 memory _slot0 = slot0;
 
-        // Update liquidity
-        liquidity += amount;
-
         // Update tick info
         bool flippedLower = ticks.update(tickLower, amount);
         bool flippedUpper = ticks.update(tickUpper, amount);
@@ -137,11 +134,27 @@ contract Pool is IPool {
         Position.Info storage position = positions.get(owner, tickLower, tickUpper);
         position.update(amount);
 
-        // Calculate amount0 and amount1
-        amount0 =
-            SqrtPriceMath.getAmount0Delta(_slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickUpper), amount, true);
-        amount1 =
-            SqrtPriceMath.getAmount1Delta(_slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickLower), amount, true);
+        // Determine if the current price is within the tick range to calculate amount0 and amount1
+        if (_slot0.tick < tickLower) {
+            amount0 = SqrtPriceMath.getAmount0Delta(
+                TickMath.getSqrtRatioAtTick(tickLower), TickMath.getSqrtRatioAtTick(tickUpper), amount, true
+            );
+        } else if (_slot0.tick < tickUpper) {
+            amount0 = SqrtPriceMath.getAmount0Delta(
+                _slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickUpper), amount, true
+            );
+
+            amount1 = SqrtPriceMath.getAmount1Delta(
+                _slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickLower), amount, true
+            );
+
+            // Update liquidity
+            liquidity += amount;
+        } else {
+            amount1 = SqrtPriceMath.getAmount1Delta(
+                TickMath.getSqrtRatioAtTick(tickLower), TickMath.getSqrtRatioAtTick(tickUpper), amount, true
+            );
+        }
 
         // Get token from user
         uint256 balance0Before;
