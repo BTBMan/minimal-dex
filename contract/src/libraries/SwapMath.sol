@@ -5,14 +5,14 @@ import {SqrtPriceMath} from "./SqrtPriceMath.sol";
 
 library SwapMath {
     /**
-     * @notice Compute the next sqrt price and token amountIn/amountOut in the swap
+     * @notice Compute the next sqrt price and token amountIn/amountOut in swap
      * @param sqrtPriceCurrentX96 The current sqrt price
      * @param sqrtPriceTargetX96 The target sqrt price
      * @param liquidity The usable liquidity
      * @param amountRemaining The amount of tokens remaining to be swapped
      * @return sqrtPriceNextX96 The next sqrt price
-     * @return amountIn The amount to be swapped in by the user
-     * @return amountOut The amount to be received by the user
+     * @return amountIn The amount to be swapped in by user
+     * @return amountOut The amount to be received by user
      */
     function computeSwapStep(
         uint160 sqrtPriceCurrentX96,

@@ -230,15 +230,19 @@ contract Pool is IPool {
             tick: slot0Start.tick
         });
 
+        // The order is filled when amountSpecifiedRemaining is 0
         while (state.amountSpecifiedRemaining > 0) {
             StepComputations memory step;
 
             step.sqrtPriceStartX96 = state.sqrtPriceX96;
 
+            // Get the next initialized tick
             (step.nextTick,) = tickBitmap.nextInitializedTickWithinOneWord(slot0Start.tick, TICK_SPACING, zeroForOne);
 
+            // Get the sqrt price of the next tick
             step.sqrtPriceNextX96 = TickMath.getSqrtRatioAtTick(step.nextTick);
 
+            // Compute the swap step
             (state.sqrtPriceX96, step.amountIn, step.amountOut) = SwapMath.computeSwapStep(
                 state.sqrtPriceX96, step.sqrtPriceNextX96, liquidity, state.amountSpecifiedRemaining
             );

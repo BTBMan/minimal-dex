@@ -69,7 +69,7 @@ contract Quoter is IQuoter, ISwapCallback {
      * @dev Just a test function
      */
     function quote(address pool, uint256 amountIn, bool zeroForOne) external returns (uint256 amountOut) {
-        // address(this) just for the calculation
+        // address(this) just for calculation
         try Pool(pool).swap(address(this), zeroForOne, amountIn, (abi.encode(pool))) {}
         catch (bytes memory reason) {
             return abi.decode(reason, (uint256));
