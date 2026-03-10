@@ -136,10 +136,12 @@ contract Pool is IPool {
 
         // Determine if the current price is within the tick range to calculate amount0 and amount1
         if (_slot0.tick < tickLower) {
+            // Out of range, amount1(token y) is 0, need to calculate amount0(token x)
             amount0 = SqrtPriceMath.getAmount0Delta(
                 TickMath.getSqrtRatioAtTick(tickLower), TickMath.getSqrtRatioAtTick(tickUpper), amount, true
             );
         } else if (_slot0.tick < tickUpper) {
+            // In range, need to calculate both amount0(token x) and amount1(token y)
             amount0 = SqrtPriceMath.getAmount0Delta(
                 _slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickUpper), amount, true
             );
@@ -151,6 +153,7 @@ contract Pool is IPool {
             // Update liquidity
             liquidity += amount;
         } else {
+            // Out of range, amount0(token x) is 0, need to calculate amount1(token y)
             amount1 = SqrtPriceMath.getAmount1Delta(
                 TickMath.getSqrtRatioAtTick(tickLower), TickMath.getSqrtRatioAtTick(tickUpper), amount, true
             );
@@ -168,7 +171,7 @@ contract Pool is IPool {
         }
 
         // Transferring, use contract callback function to execute
-        // Can not let user transfer directly cuz we don't trust user
+        // Can not let users transfer directly cuz we don't trust users
         // We should deployed a contract that implements callback function we defined
         IMintCallback(msg.sender).mintCallback(amount0, amount1, data);
 
