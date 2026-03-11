@@ -23,8 +23,20 @@ library SwapMath {
         // Determine the direction of the swap
         bool zeroForOne = sqrtPriceCurrentX96 >= sqrtPriceTargetX96;
 
-        sqrtPriceNextX96 =
-            SqrtPriceMath.getNextSqrtPriceFromInput(sqrtPriceCurrentX96, liquidity, amountRemaining, zeroForOne);
+        amountIn = zeroForOne
+            ? SqrtPriceMath.getAmount0Delta(sqrtPriceCurrentX96, sqrtPriceNextX96, liquidity, true)
+            : SqrtPriceMath.getAmount1Delta(sqrtPriceCurrentX96, sqrtPriceNextX96, liquidity, true);
+
+        // determine if amountIn > amountRemaining
+        // If not satisfied, jump to the next tick range if it exists (doing this in the swap function)
+        // That means reached the tick range boundary, we should set sqrtPriceNextX96 to sqrtPriceTargetX96(the price at the boundary)
+        if (amountRemaining >= amountIn) {
+            sqrtPriceNextX96 = sqrtPriceTargetX96;
+        } else {
+            sqrtPriceNextX96 =
+                SqrtPriceMath.getNextSqrtPriceFromInput(sqrtPriceCurrentX96, liquidity, amountRemaining, zeroForOne);
+        }
+
         amountIn = SqrtPriceMath.getAmount0Delta(sqrtPriceCurrentX96, sqrtPriceNextX96, liquidity, true);
         amountOut = SqrtPriceMath.getAmount1Delta(sqrtPriceCurrentX96, sqrtPriceNextX96, liquidity, true);
 

@@ -20,6 +20,7 @@ import {TickBitmap} from "../libraries/TickBitmap.sol";
 import {SqrtPriceMath} from "./../libraries/SqrtPriceMath.sol";
 import {TickMath} from "./../libraries/TickMath.sol";
 import {SwapMath} from "./../libraries/SwapMath.sol";
+import {LiquidityMath} from "./../libraries/LiquidityMath.sol";
 
 /**
  * @title Pool
@@ -119,8 +120,8 @@ contract Pool is IPool {
         Slot0 memory _slot0 = slot0;
 
         // Update tick info
-        bool flippedLower = ticks.update(tickLower, amount);
-        bool flippedUpper = ticks.update(tickUpper, amount);
+        bool flippedLower = ticks.update(tickLower, int128(amount), false);
+        bool flippedUpper = ticks.update(tickUpper, int128(amount), true);
 
         // Update tick bitmap liquidity
         if (flippedLower) {
@@ -195,6 +196,8 @@ contract Pool is IPool {
         uint160 sqrtPriceX96;
         // The tick associated with the current price
         int24 tick;
+        // Current liquidity of the tick range
+        uint128 liquidity;
     }
 
     struct StepComputations {
@@ -222,12 +225,14 @@ contract Pool is IPool {
         returns (int256 amount0, int256 amount1)
     {
         Slot0 memory slot0Start = slot0;
+        uint128 _liquidity = liquidity;
 
         SwapState memory state = SwapState({
             amountSpecifiedRemaining: amountSpecified,
             amountCalculated: 0,
             sqrtPriceX96: slot0Start.sqrtPriceX96,
-            tick: slot0Start.tick
+            tick: slot0Start.tick,
+            liquidity: _liquidity
         });
 
         // The order is filled when amountSpecifiedRemaining is 0
@@ -250,10 +255,37 @@ contract Pool is IPool {
                 state.sqrtPriceX96, step.sqrtPriceNextX96, liquidity, state.amountSpecifiedRemaining
             );
 
+            // Reach the tick boundary
+            if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
+                // Update state liquidity
+                int128 liquidityDelta = ticks.cross(step.nextTick);
+
+                // Determine if token 0 for token 1
+                if (zeroForOne) liquidityDelta = -liquidityDelta;
+
+                state.liquidity = LiquidityMath.addDelta(state.liquidity, liquidityDelta);
+
+                if (state.liquidity == 0) revert NotEnoughLiquidity();
+
+                // Update tick
+                // If price decreasing, tick should be the tickLower decreased by 1
+                //
+                // If price increasing, tick should be the tickUpper, don't need to increase by 1
+                // because in `nextInitializedTickWithinOneWord`, It's finding the next initialized tick from the given tick increasing by 1
+                state.tick = zeroForOne ? step.nextTick - 1 : step.nextTick;
+            } else {
+                state.tick = TickMath.getTickAtSqrtRatio(state.sqrtPriceX96);
+            }
+
             // Update state
             state.amountSpecifiedRemaining -= step.amountIn;
             state.amountCalculated += step.amountOut;
-            state.tick = TickMath.getTickAtSqrtRatio(state.sqrtPriceX96);
+        }
+
+        // Update liquidity
+        // Means it moved to the next tick range
+        if (_liquidity != state.liquidity) {
+            liquidity = state.liquidity;
         }
 
         // Update token amounts

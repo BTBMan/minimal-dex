@@ -41,6 +41,7 @@ interface IPool {
     error ZeroLiquidity();
     error InsufficientInputAmount();
     error SwapFailed();
+    error NotEnoughLiquidity();
 
     ////////////////////////////////////
     // External functions             //
@@ -49,7 +50,7 @@ interface IPool {
     function token1() external view returns (address);
 
     function positions(bytes32 positionKey) external view returns (uint128 liquidity);
-    function ticks(int24 tick) external view returns (bool initialized, uint128 liquidity);
+    function ticks(int24 tick) external view returns (bool initialized, uint128 liquidityGross, int128 liquidityNet);
     function slot0() external view returns (uint160 sqrtPriceX96, int24 tick);
     function liquidity() external view returns (uint128 liquidity);
 
