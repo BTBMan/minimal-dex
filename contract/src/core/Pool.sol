@@ -236,13 +236,16 @@ contract Pool is IPool {
 
             step.sqrtPriceStartX96 = state.sqrtPriceX96;
 
-            // Get the next initialized tick
-            (step.nextTick,) = tickBitmap.nextInitializedTickWithinOneWord(slot0Start.tick, TICK_SPACING, zeroForOne);
+            // Get the price boundary tick(tickLower or tickUpper, maybe overlapping part???)
+            (step.nextTick,) = tickBitmap.nextInitializedTickWithinOneWord(state.tick, TICK_SPACING, zeroForOne);
 
-            // Get the sqrt price of the next tick
+            // Get the sqrt price of the boundary tick
             step.sqrtPriceNextX96 = TickMath.getSqrtRatioAtTick(step.nextTick);
 
             // Compute the swap step
+            // Get the target sqrt price for the specified token trade amount(and re-assigned to state.sqrtPriceX96)
+            // Get the actual token trade amount(and assigned to step.amountIn)
+            // Get the actual token received amount(and assigned to step.amountOut)
             (state.sqrtPriceX96, step.amountIn, step.amountOut) = SwapMath.computeSwapStep(
                 state.sqrtPriceX96, step.sqrtPriceNextX96, liquidity, state.amountSpecifiedRemaining
             );
