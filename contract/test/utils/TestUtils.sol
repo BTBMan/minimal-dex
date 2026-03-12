@@ -63,8 +63,6 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback {
         token0 = new ERC20Mock();
         token1 = new ERC20Mock();
 
-        console.log("aaaaaaaaaaaaaaaaa");
-
         vm.deal(user, STARTING_BALANCE);
     }
 
