@@ -225,14 +225,14 @@ contract Pool is IPool {
         returns (int256 amount0, int256 amount1)
     {
         Slot0 memory slot0Start = slot0;
-        uint128 _liquidity = liquidity;
+        uint128 liquidity_ = liquidity;
 
         SwapState memory state = SwapState({
             amountSpecifiedRemaining: amountSpecified,
             amountCalculated: 0,
             sqrtPriceX96: slot0Start.sqrtPriceX96,
             tick: slot0Start.tick,
-            liquidity: _liquidity
+            liquidity: liquidity_
         });
 
         // The order is filled when amountSpecifiedRemaining is 0
@@ -252,19 +252,20 @@ contract Pool is IPool {
             // Get the actual token trade amount(and assigned to step.amountIn)
             // Get the actual token received amount(and assigned to step.amountOut)
             (state.sqrtPriceX96, step.amountIn, step.amountOut) = SwapMath.computeSwapStep(
-                state.sqrtPriceX96, step.sqrtPriceNextX96, liquidity, state.amountSpecifiedRemaining
+                state.sqrtPriceX96, step.sqrtPriceNextX96, state.liquidity, state.amountSpecifiedRemaining
             );
 
             // Reach the tick boundary
             if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
-                // Update state liquidity
                 int128 liquidityDelta = ticks.cross(step.nextTick);
 
                 // Determine if token 0 for token 1
                 if (zeroForOne) liquidityDelta = -liquidityDelta;
 
+                // Update state liquidity
                 state.liquidity = LiquidityMath.addDelta(state.liquidity, liquidityDelta);
 
+                // Actually, not doing this in Uniswap
                 if (state.liquidity == 0) revert NotEnoughLiquidity();
 
                 // Update tick
@@ -284,7 +285,7 @@ contract Pool is IPool {
 
         // Update liquidity
         // Means it moved to the next tick range
-        if (_liquidity != state.liquidity) {
+        if (liquidity_ != state.liquidity) {
             liquidity = state.liquidity;
         }
 
