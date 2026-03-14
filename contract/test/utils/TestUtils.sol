@@ -143,29 +143,31 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback {
         token0.mint(address(this), poolParams.wethBalance);
         token1.mint(address(this), poolParams.usdcBalance);
 
-        // Approve tokens to the current test contract
-        token0.approve(address(this), poolParams.wethBalance);
-        token1.approve(address(this), poolParams.usdcBalance);
-
         // Create pool
         pool = new Pool(address(token0), address(token1), sqrtP(poolParams.currentPrice), tick(poolParams.currentPrice));
 
         shouldTransferInCallback = poolParams.shouldTransferInCallback;
 
         // Add liquidity from liquidity array
-        uint256 poolBalance0Tmp;
-        uint256 poolBalance1Tmp;
-        for (uint256 i = 0; i < poolParams.liquidity.length; i++) {
-            (poolBalance0Tmp, poolBalance1Tmp) = pool.mint(
-                address(this),
-                poolParams.liquidity[i].tickLower,
-                poolParams.liquidity[i].tickUpper,
-                poolParams.liquidity[i].amount,
-                abi.encode(token0, token1, address(this))
-            );
+        if (poolParams.mintLiquidity) {
+            // Approve tokens to the current test contract first
+            token0.approve(address(this), poolParams.wethBalance);
+            token1.approve(address(this), poolParams.usdcBalance);
 
-            poolBalance0 += poolBalance0Tmp;
-            poolBalance1 += poolBalance1Tmp;
+            uint256 poolBalance0Tmp;
+            uint256 poolBalance1Tmp;
+            for (uint256 i = 0; i < poolParams.liquidity.length; i++) {
+                (poolBalance0Tmp, poolBalance1Tmp) = pool.mint(
+                    address(this),
+                    poolParams.liquidity[i].tickLower,
+                    poolParams.liquidity[i].tickUpper,
+                    poolParams.liquidity[i].amount,
+                    abi.encode(token0, token1, address(this))
+                );
+
+                poolBalance0 += poolBalance0Tmp;
+                poolBalance1 += poolBalance1Tmp;
+            }
         }
     }
 }
