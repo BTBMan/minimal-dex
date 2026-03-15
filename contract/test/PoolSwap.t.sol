@@ -215,6 +215,91 @@ contract PoolSwapTest is Test, TestUtils {
         );
     }
 
+    function testBuyETHPartiallyOverlappingPriceRanges() public {
+        (LiquidityRange memory range1, LiquidityRange memory range2) = (
+            liquidityRange(4540, 5500, 1 ether, 5000 ether, 5000), liquidityRange(5001, 6250, 1 ether, 5000 ether, 5000)
+        );
+        LiquidityRange[] memory liquidity = new LiquidityRange[](2);
+        liquidity[0] = range1;
+        liquidity[1] = range2;
+        PoolParams memory poolParams = PoolParams({
+            wethBalance: 2 ether,
+            usdcBalance: 10000 ether,
+            currentPrice: 5000,
+            liquidity: liquidity,
+            shouldTransferInCallback: true,
+            mintLiquidity: true
+        });
+        (uint256 poolBalance0, uint256 poolBalance1) = setupTestCase(poolParams);
+
+        uint256 swapAmount = 10000 ether;
+
+        // Mint and Approve some USDC tokens to the current test contract
+        token1.mint(address(this), swapAmount);
+        token1.approve(address(this), swapAmount);
+
+        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
+        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+
+        (int256 amount0Delta, int256 amount1Delta) =
+            pool.swap(address(this), false, swapAmount, abi.encode(token0, token1, address(this)));
+
+        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-1.862719660691831839 ether, int256(swapAmount));
+
+        // Check swap amount
+        assertEq(amount0Delta, expectedAmount0Delta);
+        assertEq(amount1Delta, expectedAmount1Delta);
+
+        assertMany(
+            ExpectedMany({
+                pool: pool,
+                tokens: [token0, token1],
+                liquidity: range2.amount,
+                sqrtPriceX96: 6172233564764672077672517253553, // 6069.117370400689
+                tick: 87114,
+                fees: [uint256(0), 0],
+                userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
+                poolBalances: [
+                    uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
+                ],
+                ticks: [
+                    ExpectedTickShort({
+                        tick: range2.tickLower,
+                        initialized: true,
+                        liquidityGross: range2.amount,
+                        liquidityNet: int128(range2.amount)
+                    }),
+                    ExpectedTickShort({
+                        tick: range2.tickUpper,
+                        initialized: true,
+                        liquidityGross: range2.amount,
+                        liquidityNet: -int128(range2.amount)
+                    })
+                ]
+            })
+        );
+
+        assertTick(
+            ExpectedTick({
+                pool: pool,
+                tick: range1.tickLower,
+                initialized: true,
+                liquidityGross: range1.amount,
+                liquidityNet: int128(range1.amount)
+            })
+        );
+
+        assertTick(
+            ExpectedTick({
+                pool: pool,
+                tick: range1.tickUpper,
+                initialized: true,
+                liquidityGross: range1.amount,
+                liquidityNet: -int128(range1.amount)
+            })
+        );
+    }
+
     // Test buy USDC =====================================
     function testBuyUSDCOnePriceRange() public {
         // Define a liquidity range array with 1 length
@@ -401,6 +486,92 @@ contract PoolSwapTest is Test, TestUtils {
                 initialized: true,
                 liquidityGross: range1.amount + range2.amount,
                 liquidityNet: int128(range1.amount - range2.amount)
+            })
+        );
+
+        assertTick(
+            ExpectedTick({
+                pool: pool,
+                tick: range1.tickUpper,
+                initialized: true,
+                liquidityGross: range1.amount,
+                liquidityNet: -int128(range1.amount)
+            })
+        );
+    }
+
+    function testBuyUSDCPartiallyOverlappingPriceRanges() public {
+        (LiquidityRange memory range1, LiquidityRange memory range2) = (
+            liquidityRange(4540, 5500, 1 ether, 5000 ether, 5000), liquidityRange(4000, 4999, 1 ether, 5000 ether, 5000)
+        );
+        LiquidityRange[] memory liquidity = new LiquidityRange[](2);
+        liquidity[0] = range1;
+        liquidity[1] = range2;
+        PoolParams memory poolParams = PoolParams({
+            wethBalance: 2 ether,
+            usdcBalance: 10000 ether,
+            currentPrice: 5000,
+            liquidity: liquidity,
+            shouldTransferInCallback: true,
+            mintLiquidity: true
+        });
+        (uint256 poolBalance0, uint256 poolBalance1) = setupTestCase(poolParams);
+
+        uint256 swapAmount = 2 ether;
+
+        // Mint and Approve some ETH tokens to the current test contract
+        token0.mint(address(this), swapAmount);
+        token0.approve(address(this), swapAmount);
+
+        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
+        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+
+        (int256 amount0Delta, int256 amount1Delta) =
+            pool.swap(address(this), true, swapAmount, abi.encode(token0, token1, address(this)));
+
+        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
+            (int256(swapAmount), -9318.695291351037641952 ether);
+
+        // Check swap amount
+        assertEq(amount0Delta, expectedAmount0Delta);
+        assertEq(amount1Delta, expectedAmount1Delta);
+
+        assertMany(
+            ExpectedMany({
+                pool: pool,
+                tokens: [token0, token1],
+                liquidity: range2.amount,
+                sqrtPriceX96: 5091197434700471409059068614113, // 4129.340643465598
+                tick: 83262,
+                fees: [uint256(0), 0],
+                userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
+                poolBalances: [
+                    uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
+                ],
+                ticks: [
+                    ExpectedTickShort({
+                        tick: range2.tickLower,
+                        initialized: true,
+                        liquidityGross: range2.amount,
+                        liquidityNet: int128(range2.amount)
+                    }),
+                    ExpectedTickShort({
+                        tick: range2.tickUpper,
+                        initialized: true,
+                        liquidityGross: range2.amount,
+                        liquidityNet: -int128(range2.amount)
+                    })
+                ]
+            })
+        );
+
+        assertTick(
+            ExpectedTick({
+                pool: pool,
+                tick: range1.tickLower,
+                initialized: true,
+                liquidityGross: range1.amount,
+                liquidityNet: int128(range1.amount)
             })
         );
 
