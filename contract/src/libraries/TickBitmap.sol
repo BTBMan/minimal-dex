@@ -55,7 +55,7 @@ library TickBitmap {
         if (lte) {
             // Selling token x, Search to the right
             (int16 wordPos, uint8 bitPos) = position(compressed);
-            uint256 mask = 1 << bitPos - 1 + (1 << bitPos);
+            uint256 mask = (1 << bitPos) - 1 + (1 << bitPos);
             uint256 masked = self[wordPos] & mask;
 
             initialized = masked != 0;
