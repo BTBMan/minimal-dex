@@ -9,7 +9,9 @@ interface IQuoter {
         address pool;
     }
 
-    function quote(address pool, uint256 amountIn, bool zeroForOne) external returns (uint256 amountOut);
+    function quote(address pool, uint256 amountIn, uint160 sqrtPriceLimitX96, bool zeroForOne)
+        external
+        returns (uint256 amountOut);
     // function quoteExactInput(address poolAddress, bytes calldata data) external;
     // function quoteExactInputSingle(address pool, uint256 amountIn, bool zeroForOne) external returns (uint256 amountOut);
     // function quoteExactOutput(address poolAddress, bytes calldata data) external;

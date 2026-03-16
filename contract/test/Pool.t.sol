@@ -27,16 +27,10 @@ contract PoolTest is Test, TestUtils {
             shouldTransferInCallback: true,
             mintLiquidity: true
         });
-        (uint256 poolBalance0, uint256 poolBalance1) = setupTestCase(poolParams);
+        setupTestCase(poolParams);
 
         uint256 expectedAmount0 = 0.987877509829196393 ether;
         uint256 expectedAmount1 = 4999.999999999999999998 ether;
-
-        assertEq(poolBalance0, expectedAmount0, "Incorrect token0 deposited amount");
-        assertEq(poolBalance1, expectedAmount1, "Incorrect token1 deposited amount");
-
-        assertEq(token0.balanceOf(address(pool)), expectedAmount0);
-        assertEq(token1.balanceOf(address(pool)), expectedAmount1);
 
         assertMany(
             ExpectedMany({

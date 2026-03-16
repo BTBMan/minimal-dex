@@ -76,6 +76,10 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback {
         return TickMath.getSqrtRatioAtTick(tick(price));
     }
 
+    function encodeError(string memory error) internal pure returns (bytes memory encoded) {
+        encoded = abi.encodeWithSignature(error);
+    }
+
     function liquidityRange(
         uint256 lowerPrice,
         uint256 upperPrice,

@@ -218,14 +218,25 @@ contract Pool is IPool {
      * @param recipient The recipient of the tokens
      * @param zeroForOne Whether the swap is token0 for token1
      * @param amountSpecified Expected amount of the tokens to be sold
+     * @param sqrtPriceLimitX96 The price limit for the swap
      * @param data Data to be passed to the callback function
      */
-    function swap(address recipient, bool zeroForOne, uint256 amountSpecified, bytes calldata data)
-        external
-        returns (int256 amount0, int256 amount1)
-    {
+    function swap(
+        address recipient,
+        bool zeroForOne,
+        uint256 amountSpecified,
+        uint160 sqrtPriceLimitX96,
+        bytes calldata data
+    ) external returns (int256 amount0, int256 amount1) {
         Slot0 memory slot0Start = slot0;
         uint128 liquidity_ = liquidity;
+
+        // Slippage protection step 1: Ensure the sqrtPriceLimitX96 must be set correctly
+        if (zeroForOne
+                ? sqrtPriceLimitX96 >= slot0Start.sqrtPriceX96 || sqrtPriceLimitX96 <= TickMath.MIN_SQRT_RATIO
+                : sqrtPriceLimitX96 <= slot0Start.sqrtPriceX96 || sqrtPriceLimitX96 >= TickMath.MAX_SQRT_RATIO) {
+            revert InvalidSqrtPriceLimitX96();
+        }
 
         SwapState memory state = SwapState({
             amountSpecifiedRemaining: amountSpecified,
@@ -236,12 +247,13 @@ contract Pool is IPool {
         });
 
         // The order is filled when amountSpecifiedRemaining is 0
-        while (state.amountSpecifiedRemaining > 0) {
+        // Make sure the state sqrt price not equal to the sqrt price limit
+        while (state.amountSpecifiedRemaining > 0 && state.sqrtPriceX96 != sqrtPriceLimitX96) {
             StepComputations memory step;
 
             step.sqrtPriceStartX96 = state.sqrtPriceX96;
 
-            // Get the price boundary tick(tickLower or tickUpper, maybe overlapping part???)
+            // Get the price boundary tick(tickLower or tickUpper, or overlapping part)
             (step.nextTick,) = tickBitmap.nextInitializedTickWithinOneWord(state.tick, TICK_SPACING, zeroForOne);
 
             // Get the sqrt price of the boundary tick
@@ -251,8 +263,15 @@ contract Pool is IPool {
             // Get the target sqrt price for the specified token trade amount(and re-assigned to state.sqrtPriceX96)
             // Get the actual token trade amount(and assigned to step.amountIn)
             // Get the actual token received amount(and assigned to step.amountOut)
+            //
+            // Slippage protection step 2: Ensure the next sqrt price within the sqrt price limit
             (state.sqrtPriceX96, step.amountIn, step.amountOut) = SwapMath.computeSwapStep(
-                state.sqrtPriceX96, step.sqrtPriceNextX96, state.liquidity, state.amountSpecifiedRemaining
+                state.sqrtPriceX96,
+                (zeroForOne ? step.sqrtPriceNextX96 < sqrtPriceLimitX96 : step.sqrtPriceNextX96 > sqrtPriceLimitX96)
+                    ? sqrtPriceLimitX96
+                    : step.sqrtPriceNextX96,
+                state.liquidity,
+                state.amountSpecifiedRemaining
             );
 
             // Reach the tick boundary

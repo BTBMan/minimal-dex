@@ -14,6 +14,7 @@ import {ISwapCallback} from "../../interfaces/callback/ISwapCallback.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /* Libraries *****/
+import {TickMath} from "../../libraries/TickMath.sol";
 
 /**
  * @title Quoter
@@ -68,9 +69,21 @@ contract Quoter is IQuoter, ISwapCallback {
      * @notice Calculate the as much as possible output amount for given input amount
      * @dev Just a test function
      */
-    function quote(address pool, uint256 amountIn, bool zeroForOne) external returns (uint256 amountOut) {
+    function quote(address pool, uint256 amountIn, uint160 sqrtPriceLimitX96, bool zeroForOne)
+        external
+        returns (uint256 amountOut)
+    {
         // address(this) just for calculation
-        try Pool(pool).swap(address(this), zeroForOne, amountIn, (abi.encode(pool))) {}
+        try Pool(pool)
+            .swap(
+                address(this),
+                zeroForOne,
+                amountIn,
+                sqrtPriceLimitX96 == 0
+                    ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
+                    : sqrtPriceLimitX96,
+                (abi.encode(pool))
+            ) {}
         catch (bytes memory reason) {
             return abi.decode(reason, (uint256));
         }

@@ -41,7 +41,7 @@ contract PoolSwapTest is Test, TestUtils {
         int256 userBalance1Before = int256(token1.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), false, swapAmount, abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), false, swapAmount, sqrtP(5004), abi.encode(token0, token1, address(this)));
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-0.008396837685175036 ether, int256(swapAmount));
 
@@ -92,7 +92,7 @@ contract PoolSwapTest is Test, TestUtils {
         int256 userBalance1Before = int256(token1.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), false, swapAmount, abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), false, swapAmount, sqrtP(5002), abi.encode(token0, token1, address(this)));
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-0.008398498495503179 ether, int256(swapAmount));
 
@@ -157,7 +157,7 @@ contract PoolSwapTest is Test, TestUtils {
         int256 userBalance1Before = int256(token1.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), false, swapAmount, abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), false, swapAmount, sqrtP(6113), abi.encode(token0, token1, address(this)));
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-1.81912040370638959 ether, int256(swapAmount));
 
@@ -242,7 +242,7 @@ contract PoolSwapTest is Test, TestUtils {
         int256 userBalance1Before = int256(token1.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), false, swapAmount, abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), false, swapAmount, sqrtP(6070), abi.encode(token0, token1, address(this)));
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-1.862719660691831839 ether, int256(swapAmount));
 
@@ -300,6 +300,80 @@ contract PoolSwapTest is Test, TestUtils {
         );
     }
 
+    function testBuyETHSlippageInterruption() public {
+        // Define a liquidity range array with 1 length
+        LiquidityRange[] memory liquidity = new LiquidityRange[](1);
+        liquidity[0] = liquidityRange(4540, 5500, 1 ether, 5000 ether, 5000);
+        PoolParams memory poolParams = PoolParams({
+            wethBalance: 1 ether,
+            usdcBalance: 5000 ether,
+            currentPrice: 5000,
+            liquidity: liquidity,
+            shouldTransferInCallback: true,
+            mintLiquidity: true
+        });
+        (uint256 poolBalance0, uint256 poolBalance1) = setupTestCase(poolParams);
+
+        uint256 swapAmount = 42 ether;
+
+        // Mint and Approve some USDC tokens to the current test contract
+        token1.mint(address(this), swapAmount);
+        token1.approve(address(this), swapAmount);
+
+        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
+        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+
+        (int256 amount0Delta, int256 amount1Delta) =
+            pool.swap(address(this), false, swapAmount, sqrtP(5003), abi.encode(token0, token1, address(this)));
+
+        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
+            (-0.006367981248889227 ether, 31.848852667232582617 ether);
+
+        // Check swap amount
+        assertEq(amount0Delta, expectedAmount0Delta);
+        assertEq(amount1Delta, expectedAmount1Delta);
+
+        assertMany(
+            ExpectedMany({
+                pool: pool,
+                tokens: [token0, token1],
+                liquidity: liquidity[0].amount,
+                sqrtPriceX96: sqrtP(5003), // 5003
+                tick: tick(5003),
+                fees: [uint256(0), 0],
+                userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
+                poolBalances: [
+                    uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
+                ],
+                ticks: rangeToTicks(liquidity[0])
+            })
+        );
+    }
+
+    function testSwapBuyETHNotEnoughLiquidity() public {
+        LiquidityRange memory range = liquidityRange(4540, 5500, 1 ether, 5000 ether, 5000);
+        LiquidityRange[] memory liquidity = new LiquidityRange[](1);
+        liquidity[0] = range;
+        PoolParams memory poolParams = PoolParams({
+            wethBalance: 1 ether,
+            usdcBalance: 5000 ether,
+            currentPrice: 5000,
+            liquidity: liquidity,
+            shouldTransferInCallback: true,
+            mintLiquidity: true
+        });
+        setupTestCase(poolParams);
+
+        uint256 swapAmount = 5300 ether;
+
+        // Mint and Approve some USDC tokens to the current test contract
+        token1.mint(address(this), swapAmount);
+        token1.approve(address(this), swapAmount);
+
+        vm.expectRevert(encodeError("NotEnoughLiquidity()"));
+        pool.swap(address(this), false, swapAmount, sqrtP(6000), abi.encode(token0, token1, address(this)));
+    }
+
     // Test buy USDC =====================================
     function testBuyUSDCOnePriceRange() public {
         // Define a liquidity range array with 1 length
@@ -325,7 +399,7 @@ contract PoolSwapTest is Test, TestUtils {
         int256 userBalance1Before = int256(token1.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), true, swapAmount, abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), true, swapAmount, sqrtP(4993), abi.encode(token0, token1, address(this)));
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (int256(swapAmount), -66.806655895621834199 ether);
 
@@ -376,7 +450,7 @@ contract PoolSwapTest is Test, TestUtils {
         int256 userBalance1Before = int256(token1.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), true, swapAmount, abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), true, swapAmount, sqrtP(4996), abi.encode(token0, token1, address(this)));
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (int256(swapAmount), -66.827684819295968855 ether);
 
@@ -441,7 +515,7 @@ contract PoolSwapTest is Test, TestUtils {
         int256 userBalance1Before = int256(token1.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), true, swapAmount, abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), true, swapAmount, sqrtP(4094), abi.encode(token0, token1, address(this)));
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
             (int256(swapAmount), -9098.355274825336550283 ether);
@@ -527,7 +601,7 @@ contract PoolSwapTest is Test, TestUtils {
         int256 userBalance1Before = int256(token1.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), true, swapAmount, abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), true, swapAmount, sqrtP(4129), abi.encode(token0, token1, address(this)));
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
             (int256(swapAmount), -9318.695291351037641952 ether);
@@ -586,19 +660,77 @@ contract PoolSwapTest is Test, TestUtils {
         );
     }
 
-    function testSwapBuyETHNotEnoughLiquidity() public pure {
-        // PoolParams memory poolParams = PoolParams({
-        //     wethBalance: 1 ether,
-        //     usdcBalance: 5001 ether,
-        //     tickCurrent: 85176,
-        //     tickLower: 84222,
-        //     tickUpper: 86129,
-        //     liquidity: 1517882343751509868544,
-        //     currentSqrtP: 5602277097478614198912276234240, // ≈ (1 ETH = 5000 USDC)
-        //     shouldTransferInCallback: true,
-        //     mintLiquidity: true
-        // });
+    function testBuyUSDCSlippageInterruption() public {
+        // Define a liquidity range array with 1 length
+        LiquidityRange[] memory liquidity = new LiquidityRange[](1);
+        liquidity[0] = liquidityRange(4540, 5500, 1 ether, 5000 ether, 5000);
+        PoolParams memory poolParams = PoolParams({
+            wethBalance: 1 ether,
+            usdcBalance: 5000 ether,
+            currentPrice: 5000,
+            liquidity: liquidity,
+            shouldTransferInCallback: true,
+            mintLiquidity: true
+        });
+        (uint256 poolBalance0, uint256 poolBalance1) = setupTestCase(poolParams);
 
-        // setupTestCase(poolParams);
+        uint256 swapAmount = 0.01337 ether;
+
+        // Mint and Approve some ETH tokens to the current test contract
+        token0.mint(address(this), swapAmount);
+        token0.approve(address(this), swapAmount);
+
+        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
+        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+
+        (int256 amount0Delta, int256 amount1Delta) =
+            pool.swap(address(this), true, swapAmount, sqrtP(4994), abi.encode(token0, token1, address(this)));
+
+        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
+            (0.012741694827272816 ether, -63.669049964153300768 ether);
+
+        // Check swap amount
+        assertEq(amount0Delta, expectedAmount0Delta);
+        assertEq(amount1Delta, expectedAmount1Delta);
+
+        assertMany(
+            ExpectedMany({
+                pool: pool,
+                tokens: [token0, token1],
+                liquidity: liquidity[0].amount,
+                sqrtPriceX96: sqrtP(4994),
+                tick: tick(4994),
+                fees: [uint256(0), 0],
+                userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
+                poolBalances: [
+                    uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
+                ],
+                ticks: rangeToTicks(liquidity[0])
+            })
+        );
+    }
+
+    function testSwapBuyUSDCNotEnoughLiquidity() public {
+        LiquidityRange memory range = liquidityRange(4540, 5500, 1 ether, 5000 ether, 5000);
+        LiquidityRange[] memory liquidity = new LiquidityRange[](1);
+        liquidity[0] = range;
+        PoolParams memory poolParams = PoolParams({
+            wethBalance: 1 ether,
+            usdcBalance: 5000 ether,
+            currentPrice: 5000,
+            liquidity: liquidity,
+            shouldTransferInCallback: true,
+            mintLiquidity: true
+        });
+        setupTestCase(poolParams);
+
+        uint256 swapAmount = 2 ether;
+
+        // Mint and Approve some ETH tokens to the current test contract
+        token0.mint(address(this), swapAmount);
+        token0.approve(address(this), swapAmount);
+
+        vm.expectRevert(encodeError("NotEnoughLiquidity()"));
+        pool.swap(address(this), true, swapAmount, sqrtP(4000), abi.encode(token0, token1, address(this)));
     }
 }

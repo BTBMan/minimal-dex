@@ -12,8 +12,11 @@ import {Pool} from "../core/Pool.sol";
 import {INonfungiblePositionManager} from "../interfaces/INonfungiblePositionManager.sol";
 import {IMintCallback} from "../interfaces/callback/IMintCallback.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IPool} from "../interfaces/IPool.sol";
 
 /* Libraries *****/
+import {TickMath} from "../libraries/TickMath.sol";
+import {LiquidityMath} from "../libraries/LiquidityMath.sol";
 
 /**
  * @title  NonfungiblePositionManager
@@ -57,10 +60,34 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
     //     //
     // }
 
-    function mint(address poolAddress, int24 tickLower, int24 tickUpper, uint128 liquidity, bytes calldata data)
-        external
-    {
-        Pool(poolAddress).mint(msg.sender, tickLower, tickUpper, liquidity, data);
+    function mint(MintParams calldata params) public returns (uint256 amount0, uint256 amount1) {
+        // Get pool contract
+        IPool pool = IPool(params.poolAddress);
+
+        // Get current sqrt price of the current pool
+        (uint160 sqrtPriceX96,) = pool.slot0();
+        // Calculate tickLower/tickUpper sqrt price
+        uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(params.tickLower);
+        uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(params.tickUpper);
+
+        // Calculate liquidity
+        uint128 liquidity = LiquidityMath.getLiquidityForAmounts(
+            sqrtPriceX96, sqrtPriceLowerX96, sqrtPriceUpperX96, params.amount0Desired, params.amount1Desired
+        );
+
+        // Mint(create position)
+        (amount0, amount1) = pool.mint(
+            address(this),
+            params.tickLower,
+            params.tickUpper,
+            liquidity,
+            abi.encode(MintCallbackData({token0: params.token0, token1: params.token1, payer: msg.sender}))
+        );
+
+        // Check the slippage
+        if (amount0 < params.amount0Min || amount1 < params.amount1Min) {
+            revert SlippageCheckFailed(amount0, amount1);
+        }
     }
 
     function mintCallback(uint256 amount0Owed, uint256 amount1Owed, bytes calldata data) external {
