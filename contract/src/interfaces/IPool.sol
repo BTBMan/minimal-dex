@@ -34,6 +34,8 @@ interface IPool {
         int24 tick
     );
 
+    event Flash(address indexed recipient, uint256 amount0, uint256 amount1);
+
     ////////////////////////////////////
     // Errors                         //
     ////////////////////////////////////
@@ -43,6 +45,7 @@ interface IPool {
     error SwapFailed();
     error NotEnoughLiquidity();
     error InvalidSqrtPriceLimitX96();
+    error FlashLoanNotPaid();
 
     ////////////////////////////////////
     // External functions             //
@@ -65,4 +68,5 @@ interface IPool {
         uint160 sqrtPriceLimitX96,
         bytes calldata data
     ) external returns (int256 amount0, int256 amount1);
+    function flash(uint256 amount0, uint256 amount1, bytes calldata data) external;
 }

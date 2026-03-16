@@ -14,8 +14,6 @@ import {INonfungiblePositionManager} from "../src/interfaces/INonfungiblePositio
 /* Libraries *****/
 
 contract NonfungiblePositionManagerTest is Test, TestUtils {
-    NonfungiblePositionManager nonfungiblePositionManager;
-
     struct MintParams {
         uint256 wethBalance;
         uint256 usdcBalance;
@@ -28,6 +26,8 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
         uint256 amount1Min;
         bool mintLiquidity;
     }
+
+    NonfungiblePositionManager nonfungiblePositionManager;
 
     function setUp() public override {
         super.setUp();

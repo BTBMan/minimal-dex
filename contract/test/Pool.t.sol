@@ -46,4 +46,23 @@ contract PoolTest is Test, TestUtils {
             })
         );
     }
+
+    function testFlash() public {
+        LiquidityRange[] memory liquidity = new LiquidityRange[](1);
+        liquidity[0] = liquidityRange(4540, 5500, 1 ether, 5000 ether, 5000);
+        PoolParams memory poolParams = PoolParams({
+            wethBalance: 1 ether,
+            usdcBalance: 5000 ether,
+            currentPrice: 5000,
+            liquidity: liquidity,
+            shouldTransferInCallback: true,
+            mintLiquidity: true
+        });
+        setupTestCase(poolParams);
+
+        vm.expectEmit(true, true, true, false);
+        pool.flash(0.1 ether, 1000 ether, abi.encodePacked(uint256(0.1 ether), uint256(1000 ether)));
+
+        assert(flashCallbackCalled);
+    }
 }

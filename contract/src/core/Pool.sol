@@ -12,6 +12,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPool} from "../interfaces/IPool.sol";
 import {IMintCallback} from "../interfaces/callback/IMintCallback.sol";
 import {ISwapCallback} from "../interfaces/callback/ISwapCallback.sol";
+import {IFlashCallback} from "../interfaces/callback/IFlashCallback.sol";
 
 /* Libraries *****/
 import {Tick} from "../libraries/Tick.sol";
@@ -354,6 +355,29 @@ contract Pool is IPool {
         }
 
         emit Swap(msg.sender, recipient, amount0, amount1, slot0.sqrtPriceX96, liquidity, slot0.tick);
+    }
+
+    function flash(uint256 amount0, uint256 amount1, bytes calldata data) external {
+        // Balance of the pool before lend tokens
+        uint256 balance0Before = balance0();
+        uint256 balance1Before = balance1();
+
+        // Transfer to msg.sender
+        if (amount0 > 0) {
+            IERC20(token0).transfer(msg.sender, amount0);
+        }
+        if (amount1 > 0) {
+            IERC20(token1).transfer(msg.sender, amount1);
+        }
+
+        // Call the callback function
+        IFlashCallback(msg.sender).flashCallback(data);
+
+        if (balance0Before < balance0() || balance1Before < balance1()) {
+            revert FlashLoanNotPaid();
+        }
+
+        emit Flash(msg.sender, amount0, amount1);
     }
 
     // External view  //////////////////

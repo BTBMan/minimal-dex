@@ -8,6 +8,7 @@ import {Pool} from "../../src/core/Pool.sol";
 import {INonfungiblePositionManager} from "../../src/interfaces/INonfungiblePositionManager.sol";
 import {IMintCallback} from "../../src/interfaces/callback/IMintCallback.sol";
 import {ISwapCallback} from "../../src/interfaces/callback/ISwapCallback.sol";
+import {IFlashCallback} from "../../src/interfaces/callback/IFlashCallback.sol";
 import {ISwapRouter} from "../../src/interfaces/ISwapRouter.sol";
 
 /* Libraries *****/
@@ -19,7 +20,7 @@ import {FixedPoint96} from "./../../src/libraries/FixedPoint96.sol";
 import {LiquidityMath} from "./../../src/libraries/LiquidityMath.sol";
 import {Assertions} from "./Assertions.sol";
 
-abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback {
+abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, IFlashCallback {
     ////////////////////////////////////
     // Type declarations              //
     ////////////////////////////////////
@@ -43,6 +44,7 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback {
     ERC20Mock public token1; // USDC
 
     bool public shouldTransferInCallback;
+    bool public flashCallbackCalled;
 
     address public user = makeAddr("user");
 
@@ -136,6 +138,19 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback {
         if (amount1Delta > 0) {
             token1.transferFrom(extra.payer, msg.sender, uint256(amount1Delta));
         }
+    }
+
+    function flashCallback(bytes calldata data) external virtual override {
+        (uint256 amount0, uint256 amount1) = abi.decode(data, (uint256, uint256));
+
+        if (amount0 > 0) {
+            token0.transfer(msg.sender, amount0);
+        }
+        if (amount1 > 0) {
+            token1.transfer(msg.sender, amount1);
+        }
+
+        flashCallbackCalled = true;
     }
 
     function setupTestCase(PoolParams memory poolParams)
