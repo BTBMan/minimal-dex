@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 /* Imports *******/
+import {Pool} from "./Pool.sol";
 
 /* Events ********/
 
@@ -25,6 +26,7 @@ contract PoolDeployer is IPoolDeployer {
     ////////////////////////////////////
     // State variables                //
     ////////////////////////////////////
+    Parameters public override parameters;
 
     ////////////////////////////////////
     // Events                         //
@@ -63,6 +65,14 @@ contract PoolDeployer is IPoolDeployer {
     ////////////////////////////////////
     // Internal functions             //
     ////////////////////////////////////
+    function deploy(address factory, address token0, address token1, uint24 tickSpacing)
+        internal
+        returns (address pool)
+    {
+        parameters = Parameters({factory: factory, token0: token0, token1: token1, tickSpacing: tickSpacing});
+        pool = address(new Pool{salt: keccak256(abi.encodePacked(token0, token1, tickSpacing))}());
+        delete parameters;
+    }
 
     // Internal view  //////////////////
 

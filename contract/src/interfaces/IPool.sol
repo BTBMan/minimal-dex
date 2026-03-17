@@ -36,6 +36,8 @@ interface IPool {
 
     event Flash(address indexed recipient, uint256 amount0, uint256 amount1);
 
+    event Initialize(uint160 sqrtPriceX96, int24 tick);
+
     ////////////////////////////////////
     // Errors                         //
     ////////////////////////////////////
@@ -46,6 +48,7 @@ interface IPool {
     error NotEnoughLiquidity();
     error InvalidSqrtPriceLimitX96();
     error FlashLoanNotPaid();
+    error AlreadyInitialized();
 
     ////////////////////////////////////
     // External functions             //
@@ -58,6 +61,7 @@ interface IPool {
     function slot0() external view returns (uint160 sqrtPriceX96, int24 tick);
     function liquidity() external view returns (uint128 liquidity);
 
+    function initialize(uint160 sqrtPriceX96) external;
     function mint(address owner, int24 tickLower, int24 tickUpper, uint128 amount, bytes calldata data)
         external
         returns (uint256 amount0, uint256 amount1);

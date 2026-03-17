@@ -13,6 +13,7 @@ import {IPool} from "../interfaces/IPool.sol";
 import {IMintCallback} from "../interfaces/callback/IMintCallback.sol";
 import {ISwapCallback} from "../interfaces/callback/ISwapCallback.sol";
 import {IFlashCallback} from "../interfaces/callback/IFlashCallback.sol";
+import {IPoolDeployer} from "../interfaces/IPoolDeployer.sol";
 
 /* Libraries *****/
 import {Tick} from "../libraries/Tick.sol";
@@ -43,11 +44,16 @@ contract Pool is IPool {
     // Min/Max tick
     int24 internal constant MIN_TICK = -887272;
     int24 internal constant MAX_TICK = -MIN_TICK;
-    int24 internal constant TICK_SPACING = 1;
 
     // Pool tokens
     address public immutable token0;
     address public immutable token1;
+
+    // Factory contract
+    address public immutable factory;
+
+    // Tick spacing
+    int24 internal immutable tickSpacing;
 
     // Current price and its corresponding tick
     Slot0 public slot0;
@@ -82,11 +88,9 @@ contract Pool is IPool {
      * @param sqrtPriceX96 The current sqrt price Q96
      * @param tick The current price tick
      */
-    constructor(address _token0, address _token1, uint160 sqrtPriceX96, int24 tick) {
-        token0 = _token0;
-        token1 = _token1;
-
-        slot0 = Slot0({sqrtPriceX96: sqrtPriceX96, tick: tick});
+    constructor() {
+        // Get parameters from deployer
+        (factory, token0, token1, tickSpacing) = IPoolDeployer(msg.sender).parameters();
     }
 
     ////////////////////////////////////
@@ -96,6 +100,22 @@ contract Pool is IPool {
     ////////////////////////////////////
     // External functions             //
     ////////////////////////////////////
+    /**
+     * @notice Initialize the pool
+     * @param sqrtPriceX96 The initial sqrt price Q96
+     */
+    function initialize(uint160 sqrtPriceX96) external {
+        if (slot0.sqrtPriceX96 != 0) {
+            revert AlreadyInitialized();
+        }
+
+        int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
+
+        slot0 = slot0({sqrtPriceX96: sqrtPriceX96, tick: tick});
+
+        emit Initialize(sqrtPriceX96, tick);
+    }
+
     /**
      * @notice Provide liquidity
      * @param owner The owner of the position
@@ -126,10 +146,10 @@ contract Pool is IPool {
 
         // Update tick bitmap liquidity
         if (flippedLower) {
-            tickBitmap.flipTick(tickLower, TICK_SPACING);
+            tickBitmap.flipTick(tickLower, tickSpacing);
         }
         if (flippedUpper) {
-            tickBitmap.flipTick(tickUpper, TICK_SPACING);
+            tickBitmap.flipTick(tickUpper, tickSpacing);
         }
 
         // Update position info
@@ -255,7 +275,7 @@ contract Pool is IPool {
             step.sqrtPriceStartX96 = state.sqrtPriceX96;
 
             // Get the price boundary tick(tickLower or tickUpper, or overlapping part)
-            (step.nextTick,) = tickBitmap.nextInitializedTickWithinOneWord(state.tick, TICK_SPACING, zeroForOne);
+            (step.nextTick,) = tickBitmap.nextInitializedTickWithinOneWord(state.tick, tickSpacing, zeroForOne);
 
             // Get the sqrt price of the boundary tick
             step.sqrtPriceNextX96 = TickMath.getSqrtRatioAtTick(step.nextTick);
