@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import "forge-std/Test.sol";
 import {Pool} from "../../src/core/Pool.sol";
+import {Factory} from "../../src/core/Factory.sol";
 
 /* Interfaces ****/
 import {INonfungiblePositionManager} from "../../src/interfaces/INonfungiblePositionManager.sol";
@@ -39,6 +40,7 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
         bool mintLiquidity;
     }
 
+    Factory public factory;
     Pool public pool;
     ERC20Mock public token0; // ETH
     ERC20Mock public token1; // USDC
@@ -64,6 +66,7 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
     function setUp() public virtual {
         token0 = new ERC20Mock();
         token1 = new ERC20Mock();
+        factory = new Factory();
 
         vm.deal(user, STARTING_BALANCE);
     }
@@ -158,14 +161,15 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
         virtual
         returns (uint256 poolBalance0, uint256 poolBalance1)
     {
+        // Create pool
+        pool = Pool(factory.createPool(address(token0), address(token1), 1));
+        pool.initialize(sqrtP(poolParams.currentPrice));
+
+        shouldTransferInCallback = poolParams.shouldTransferInCallback;
+
         // Mint tokens to this test contract
         token0.mint(address(this), poolParams.wethBalance);
         token1.mint(address(this), poolParams.usdcBalance);
-
-        // Create pool
-        pool = new Pool(address(token0), address(token1), sqrtP(poolParams.currentPrice), tick(poolParams.currentPrice));
-
-        shouldTransferInCallback = poolParams.shouldTransferInCallback;
 
         // Add liquidity from liquidity array
         if (poolParams.mintLiquidity) {

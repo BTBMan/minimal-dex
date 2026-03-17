@@ -1,4 +1,7 @@
 {
+  "contract/lib/abdk-libraries-solidity": {
+    "rev": "5e1e7c11b35f8313d3f7ce11c1b86320d7c0b554"
+  },
   "contract/lib/forge-std": {
     "rev": "3353993420c6e488a2914ce02d88174e80ad80f8"
   },
@@ -9,6 +12,12 @@
     "branch": {
       "name": "release-v4",
       "rev": "280fc5f77e1b21b9c54013aac51966be33f4a410"
+    }
+  },
+  "contract/lib/solidity-bytes-utils": {
+    "tag": {
+      "name": "v0.8.4",
+      "rev": "f4413cd6137b78403e3a1156bee6aceab46b46fa"
     }
   }
 }

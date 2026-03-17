@@ -13,7 +13,8 @@ optimizer_runs = 200
 remappings = [
   "@openzeppelin/contracts/=contract/lib/openzeppelin-contracts/contracts/",
   "@prb/math/=contract/lib/prb-math/src/",
-  "@abdk/math/=contract/lib/abdk-libraries-solidity"
+  "@abdk/math/=contract/lib/abdk-libraries-solidity/",
+  "@bytes/utils/=contract/lib/solidity-bytes-utils/contracts/"
 ]
 
 [lint]

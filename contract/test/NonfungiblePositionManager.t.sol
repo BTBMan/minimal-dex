@@ -5,6 +5,7 @@ pragma solidity ^0.8.13;
 import {Test, console} from "forge-std/Test.sol";
 import {ERC20Mock} from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
 import {Pool} from "../src/core/Pool.sol";
+import {Factory} from "../src/core/Factory.sol";
 import {TestUtils} from "./utils/TestUtils.sol";
 import {NonfungiblePositionManager} from "../src/periphery/NonfungiblePositionManager.sol";
 
@@ -34,15 +35,16 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
     }
 
     function setupTestCase(MintParams memory mintParams) public returns (uint256 poolBalance0, uint256 poolBalance1) {
-        pool = new Pool(address(token0), address(token1), sqrtP(mintParams.currentPrice), tick(mintParams.currentPrice));
+        pool = Pool(factory.createPool(address(token0), address(token1), 1));
+        pool.initialize(sqrtP(mintParams.currentPrice));
 
         nonfungiblePositionManager = new NonfungiblePositionManager();
 
-        if (mintParams.mintLiquidity) {
-            // Mint tokens to this test contract
-            token0.mint(address(this), mintParams.wethBalance);
-            token1.mint(address(this), mintParams.usdcBalance);
+        // Mint tokens to this test contract
+        token0.mint(address(this), mintParams.wethBalance);
+        token1.mint(address(this), mintParams.usdcBalance);
 
+        if (mintParams.mintLiquidity) {
             // Approve the nonfungiblePositionManager to spend the tokens
             token0.approve(address(nonfungiblePositionManager), mintParams.amount0Desired);
             token1.approve(address(nonfungiblePositionManager), mintParams.amount1Desired);
@@ -95,15 +97,22 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
     }
 
     function testAddPositionOutOfSlippage() public {
-        pool = new Pool(address(token0), address(token1), sqrtP(5000), tick(5000));
-        nonfungiblePositionManager = new NonfungiblePositionManager();
+        MintParams memory mintParams = MintParams({
+            wethBalance: 1 ether,
+            usdcBalance: 5000 ether,
+            currentPrice: 5000,
+            tickLower: tick(4540),
+            tickUpper: tick(5500),
+            amount0Desired: 1 ether,
+            amount1Desired: 5000 ether,
+            amount0Min: 1 ether,
+            amount1Min: 5000 ether,
+            mintLiquidity: false
+        });
+        setupTestCase(mintParams);
 
-        (uint256 wethBalance, uint256 usdcBalance) = (1 ether, 5000 ether);
-
-        token0.mint(address(this), wethBalance);
-        token1.mint(address(this), usdcBalance);
-        token0.approve(address(nonfungiblePositionManager), wethBalance);
-        token1.approve(address(nonfungiblePositionManager), usdcBalance);
+        token0.approve(address(nonfungiblePositionManager), mintParams.amount0Desired);
+        token1.approve(address(nonfungiblePositionManager), mintParams.amount1Desired);
 
         uint256 expectedAmount0 = 0.987877509829196393 ether;
         uint256 expectedAmount1 = 4999.999999999999999998 ether;
@@ -118,12 +127,12 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
                 token0: address(token0),
                 token1: address(token1),
                 recipient: address(this),
-                tickLower: tick(4540),
-                tickUpper: tick(5500),
-                amount0Desired: 1 ether,
-                amount1Desired: 5000 ether,
-                amount0Min: 1 ether,
-                amount1Min: 5000 ether,
+                tickLower: mintParams.tickLower,
+                tickUpper: mintParams.tickUpper,
+                amount0Desired: mintParams.amount0Desired,
+                amount1Desired: mintParams.amount1Desired,
+                amount0Min: mintParams.amount0Min,
+                amount1Min: mintParams.amount1Min,
                 poolAddress: address(pool)
             })
         );

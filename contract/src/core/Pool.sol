@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 /* Imports *******/
+import "forge-std/console.sol";
 
 /* Events ********/
 
@@ -189,6 +190,16 @@ contract Pool is IPool {
         // Can not let users transfer directly cuz we don't trust users
         // We should deployed a contract that implements callback function we defined
         IMintCallback(msg.sender).mintCallback(amount0, amount1, data);
+
+        // TODO
+        console.log("balance0Before", balance0Before);
+        console.log("balance1Before", balance1Before);
+        console.log("amount0", amount0);
+        console.log("amount1", amount1);
+        console.log("balance0", balance0());
+        console.log("balance1", balance1());
+        console.log(amount0 > 0 && balance0Before + amount0 > balance0());
+        console.log(amount1 > 0 && balance1Before + amount1 > balance1());
 
         // Validate balance after transfer
         if (amount0 > 0 && balance0Before + amount0 > balance0()) {

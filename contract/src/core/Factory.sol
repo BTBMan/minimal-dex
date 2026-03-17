@@ -43,6 +43,7 @@ contract Factory is IFactory, PoolDeployer {
 
     constructor() {
         // Set the initialization of tick spacing
+        tickSpacings[1] = true;
         tickSpacings[10] = true;
         tickSpacings[60] = true;
     }
