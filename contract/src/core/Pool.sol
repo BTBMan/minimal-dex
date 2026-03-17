@@ -81,13 +81,6 @@ contract Pool is IPool {
     // Modifiers                      //
     ////////////////////////////////////
 
-    /**
-     * @notice Parameters to be passed when creating a pool in the factory
-     * @param _token0 The address of the first token
-     * @param _token1 The address of the second token
-     * @param sqrtPriceX96 The current sqrt price Q96
-     * @param tick The current price tick
-     */
     constructor() {
         // Get parameters from deployer
         (factory, token0, token1, tickSpacing) = IPoolDeployer(msg.sender).parameters();
@@ -111,7 +104,7 @@ contract Pool is IPool {
 
         int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
 
-        slot0 = slot0({sqrtPriceX96: sqrtPriceX96, tick: tick});
+        slot0 = Slot0({sqrtPriceX96: sqrtPriceX96, tick: tick});
 
         emit Initialize(sqrtPriceX96, tick);
     }

@@ -26,8 +26,8 @@ contract Factory is IFactory, PoolDeployer {
     ////////////////////////////////////
     // State variables                //
     ////////////////////////////////////
-    mapping(uint24 tickSpacing => bool) public tickSpacings;
-    mapping(address token0 => mapping(address token1 => mapping(uint24 tickSpacing => address pool))) public pools;
+    mapping(int24 tickSpacing => bool) public tickSpacings;
+    mapping(address token0 => mapping(address token1 => mapping(int24 tickSpacing => address pool))) public pools;
 
     ////////////////////////////////////
     // Events                         //
@@ -62,7 +62,7 @@ contract Factory is IFactory, PoolDeployer {
     ////////////////////////////////////
     // Public functions               //
     ////////////////////////////////////
-    function createPool(address tokenA, address tokenB, uint24 tickSpacing) public returns (address pool) {
+    function createPool(address tokenA, address tokenB, int24 tickSpacing) public returns (address pool) {
         if (tokenA == tokenB) {
             revert TokensMustBeDifferent();
         }

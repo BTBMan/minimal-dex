@@ -65,7 +65,7 @@ contract PoolDeployer is IPoolDeployer {
     ////////////////////////////////////
     // Internal functions             //
     ////////////////////////////////////
-    function deploy(address factory, address token0, address token1, uint24 tickSpacing)
+    function deploy(address factory, address token0, address token1, int24 tickSpacing)
         internal
         returns (address pool)
     {
