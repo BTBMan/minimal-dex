@@ -257,6 +257,9 @@ contract Pool is IPool {
         uint128 liquidity_ = liquidity;
 
         // Slippage protection step 1: Ensure the sqrtPriceLimitX96 must be set correctly
+        // zeroForOne: ⤵️ TickMath.MIN_SQRT_RATIO < sqrtPriceLimitX96 < sqrtPrice ✅
+        // oneForZero: ⤴️ TickMath.MAX_SQRT_RATIO > sqrtPriceLimitX96 > sqrtPrice ✅
+        // Otherwise revert
         if (zeroForOne
                 ? sqrtPriceLimitX96 >= slot0Start.sqrtPriceX96 || sqrtPriceLimitX96 <= TickMath.MIN_SQRT_RATIO
                 : sqrtPriceLimitX96 <= slot0Start.sqrtPriceX96 || sqrtPriceLimitX96 >= TickMath.MAX_SQRT_RATIO) {

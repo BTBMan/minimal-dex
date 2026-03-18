@@ -13,21 +13,34 @@ import {Pool} from "./../core/Pool.sol";
 /* Libraries *****/
 
 library PoolAddress {
+    struct PoolKey {
+        address token0;
+        address token1;
+        int24 tickSpacing;
+    }
+
+    /**
+     * @notice Returns PoolKey, with the ordered tokens
+     */
+    function getPoolKey(address tokenA, address tokenB, int24 tickSpacing)
+        internal
+        pure
+        returns (PoolKey memory poolKey)
+    {
+        if (tokenA > tokenB) (tokenA, tokenB) = (tokenB, tokenA);
+
+        poolKey = PoolKey({token0: tokenA, token1: tokenB, tickSpacing: tickSpacing});
+    }
+
     /**
      * @notice Compute the pool address
      * @param factory The address of the factory contract
-     * @param token0 The address of the first token
-     * @param token1 The address of the second token
-     * @param tickSpacing The tick spacing
+     * @param key The pool key
      * @return pool The address of the pool contract
      */
-    function computeAddress(address factory, address token0, address token1, uint24 tickSpacing)
-        internal
-        pure
-        returns (address pool)
-    {
+    function computeAddress(address factory, PoolKey memory key) internal pure returns (address pool) {
         // Ensure token0 less than token1
-        require(token0 < token1);
+        require(key.token0 < key.token1);
 
         pool = address(
             uint160(
@@ -36,7 +49,7 @@ library PoolAddress {
                         abi.encodePacked(
                             "0xff",
                             factory,
-                            keccak256(abi.encodePacked(token0, token1, tickSpacing)),
+                            keccak256(abi.encodePacked(key.token0, key.token1, key.tickSpacing)),
                             keccak256(type(Pool).creationCode)
                         )
                     )
