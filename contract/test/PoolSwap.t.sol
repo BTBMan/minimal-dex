@@ -12,8 +12,11 @@ import {TestUtils} from "./utils/TestUtils.sol";
 /* Libraries *****/
 
 contract PoolSwapTest is Test, TestUtils {
+    bytes callbackData;
+
     function setUp() public override {
         super.setUp();
+        callbackData = encodeCallbackData(address(weth), address(usdc), address(this));
     }
 
     // Test buy ETH ============================
@@ -34,14 +37,14 @@ contract PoolSwapTest is Test, TestUtils {
         uint256 swapAmount = 42 ether;
 
         // Mint and Approve some USDC tokens to the current test contract
-        token1.mint(address(this), swapAmount);
-        token1.approve(address(this), swapAmount);
+        usdc.mint(address(this), swapAmount);
+        usdc.approve(address(this), swapAmount);
 
-        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
-        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+        int256 userBalance0Before = int256(weth.balanceOf(address(this)));
+        int256 userBalance1Before = int256(usdc.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), false, swapAmount, sqrtP(5004), abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), false, swapAmount, sqrtP(5004), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-0.008396837685175036 ether, int256(swapAmount));
 
@@ -52,7 +55,7 @@ contract PoolSwapTest is Test, TestUtils {
         assertMany(
             ExpectedMany({
                 pool: pool,
-                tokens: [token0, token1],
+                tokens: [weth, usdc],
                 liquidity: liquidity[0].amount,
                 sqrtPriceX96: 5604440321401375301926914693788, // 5003.862075243974
                 tick: 85183,
@@ -85,14 +88,14 @@ contract PoolSwapTest is Test, TestUtils {
         uint256 swapAmount = 42 ether;
 
         // Mint and Approve some USDC tokens to the current test contract
-        token1.mint(address(this), swapAmount);
-        token1.approve(address(this), swapAmount);
+        usdc.mint(address(this), swapAmount);
+        usdc.approve(address(this), swapAmount);
 
-        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
-        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+        int256 userBalance0Before = int256(weth.balanceOf(address(this)));
+        int256 userBalance1Before = int256(usdc.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), false, swapAmount, sqrtP(5002), abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), false, swapAmount, sqrtP(5002), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-0.008398498495503179 ether, int256(swapAmount));
 
@@ -103,7 +106,7 @@ contract PoolSwapTest is Test, TestUtils {
         assertMany(
             ExpectedMany({
                 pool: pool,
-                tokens: [token0, token1],
+                tokens: [weth, usdc],
                 liquidity: liquidityAmount,
                 sqrtPriceX96: 5603332038489348602474524844738, // 5001.883234831316
                 tick: 85179,
@@ -150,14 +153,14 @@ contract PoolSwapTest is Test, TestUtils {
         uint256 swapAmount = 10000 ether;
 
         // Mint and Approve some USDC tokens to the current test contract
-        token1.mint(address(this), swapAmount);
-        token1.approve(address(this), swapAmount);
+        usdc.mint(address(this), swapAmount);
+        usdc.approve(address(this), swapAmount);
 
-        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
-        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+        int256 userBalance0Before = int256(weth.balanceOf(address(this)));
+        int256 userBalance1Before = int256(usdc.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), false, swapAmount, sqrtP(6113), abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), false, swapAmount, sqrtP(6113), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-1.81912040370638959 ether, int256(swapAmount));
 
@@ -168,7 +171,7 @@ contract PoolSwapTest is Test, TestUtils {
         assertMany(
             ExpectedMany({
                 pool: pool,
-                tokens: [token0, token1],
+                tokens: [weth, usdc],
                 liquidity: range2.amount,
                 sqrtPriceX96: 6194331388292842240173903498830, // 6112.652457372715
                 tick: 87185,
@@ -235,14 +238,14 @@ contract PoolSwapTest is Test, TestUtils {
         uint256 swapAmount = 10000 ether;
 
         // Mint and Approve some USDC tokens to the current test contract
-        token1.mint(address(this), swapAmount);
-        token1.approve(address(this), swapAmount);
+        usdc.mint(address(this), swapAmount);
+        usdc.approve(address(this), swapAmount);
 
-        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
-        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+        int256 userBalance0Before = int256(weth.balanceOf(address(this)));
+        int256 userBalance1Before = int256(usdc.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), false, swapAmount, sqrtP(6070), abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), false, swapAmount, sqrtP(6070), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-1.862719660691831839 ether, int256(swapAmount));
 
@@ -253,7 +256,7 @@ contract PoolSwapTest is Test, TestUtils {
         assertMany(
             ExpectedMany({
                 pool: pool,
-                tokens: [token0, token1],
+                tokens: [weth, usdc],
                 liquidity: range2.amount,
                 sqrtPriceX96: 6172233564764672077672517253553, // 6069.117370400689
                 tick: 87114,
@@ -317,14 +320,14 @@ contract PoolSwapTest is Test, TestUtils {
         uint256 swapAmount = 42 ether;
 
         // Mint and Approve some USDC tokens to the current test contract
-        token1.mint(address(this), swapAmount);
-        token1.approve(address(this), swapAmount);
+        usdc.mint(address(this), swapAmount);
+        usdc.approve(address(this), swapAmount);
 
-        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
-        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+        int256 userBalance0Before = int256(weth.balanceOf(address(this)));
+        int256 userBalance1Before = int256(usdc.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), false, swapAmount, sqrtP(5003), abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), false, swapAmount, sqrtP(5003), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
             (-0.006367981248889227 ether, 31.848852667232582617 ether);
@@ -336,7 +339,7 @@ contract PoolSwapTest is Test, TestUtils {
         assertMany(
             ExpectedMany({
                 pool: pool,
-                tokens: [token0, token1],
+                tokens: [weth, usdc],
                 liquidity: liquidity[0].amount,
                 sqrtPriceX96: sqrtP(5003), // 5003
                 tick: tick(5003),
@@ -367,11 +370,11 @@ contract PoolSwapTest is Test, TestUtils {
         uint256 swapAmount = 5300 ether;
 
         // Mint and Approve some USDC tokens to the current test contract
-        token1.mint(address(this), swapAmount);
-        token1.approve(address(this), swapAmount);
+        usdc.mint(address(this), swapAmount);
+        usdc.approve(address(this), swapAmount);
 
         vm.expectRevert(encodeError("NotEnoughLiquidity()"));
-        pool.swap(address(this), false, swapAmount, sqrtP(6000), abi.encode(token0, token1, address(this)));
+        pool.swap(address(this), false, swapAmount, sqrtP(6000), callbackData);
     }
 
     // Test buy USDC =====================================
@@ -392,14 +395,14 @@ contract PoolSwapTest is Test, TestUtils {
         uint256 swapAmount = 0.01337 ether;
 
         // Mint and Approve some ETH tokens to the current test contract
-        token0.mint(address(this), swapAmount);
-        token0.approve(address(this), swapAmount);
+        weth.mint(address(this), swapAmount);
+        weth.approve(address(this), swapAmount);
 
-        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
-        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+        int256 userBalance0Before = int256(weth.balanceOf(address(this)));
+        int256 userBalance1Before = int256(usdc.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), true, swapAmount, sqrtP(4993), abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), true, swapAmount, sqrtP(4993), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (int256(swapAmount), -66.806655895621834199 ether);
 
@@ -410,7 +413,7 @@ contract PoolSwapTest is Test, TestUtils {
         assertMany(
             ExpectedMany({
                 pool: pool,
-                tokens: [token0, token1],
+                tokens: [weth, usdc],
                 liquidity: liquidity[0].amount,
                 sqrtPriceX96: 5598698009142142596565733951525, // 4993.613409332654
                 tick: 85163,
@@ -443,14 +446,14 @@ contract PoolSwapTest is Test, TestUtils {
         uint256 swapAmount = 0.01337 ether;
 
         // Mint and Approve some ETH tokens to the current test contract
-        token0.mint(address(this), swapAmount);
-        token0.approve(address(this), swapAmount);
+        weth.mint(address(this), swapAmount);
+        weth.approve(address(this), swapAmount);
 
-        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
-        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+        int256 userBalance0Before = int256(weth.balanceOf(address(this)));
+        int256 userBalance1Before = int256(usdc.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), true, swapAmount, sqrtP(4996), abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), true, swapAmount, sqrtP(4996), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (int256(swapAmount), -66.827684819295968855 ether);
 
@@ -461,7 +464,7 @@ contract PoolSwapTest is Test, TestUtils {
         assertMany(
             ExpectedMany({
                 pool: pool,
-                tokens: [token0, token1],
+                tokens: [weth, usdc],
                 liquidity: liquidityAmount,
                 sqrtPriceX96: 5600460327455047336528300624435, // 4996.757612287727
                 tick: 85169,
@@ -508,14 +511,14 @@ contract PoolSwapTest is Test, TestUtils {
         uint256 swapAmount = 2 ether;
 
         // Mint and Approve some ETH tokens to the current test contract
-        token0.mint(address(this), swapAmount);
-        token0.approve(address(this), swapAmount);
+        weth.mint(address(this), swapAmount);
+        weth.approve(address(this), swapAmount);
 
-        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
-        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+        int256 userBalance0Before = int256(weth.balanceOf(address(this)));
+        int256 userBalance1Before = int256(usdc.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), true, swapAmount, sqrtP(4094), abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), true, swapAmount, sqrtP(4094), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
             (int256(swapAmount), -9098.355274825336550283 ether);
@@ -527,7 +530,7 @@ contract PoolSwapTest is Test, TestUtils {
         assertMany(
             ExpectedMany({
                 pool: pool,
-                tokens: [token0, token1],
+                tokens: [weth, usdc],
                 liquidity: range2.amount,
                 sqrtPriceX96: 5069757813637094491011532037516, // 4094.635609303384
                 tick: 83178,
@@ -594,14 +597,14 @@ contract PoolSwapTest is Test, TestUtils {
         uint256 swapAmount = 2 ether;
 
         // Mint and Approve some ETH tokens to the current test contract
-        token0.mint(address(this), swapAmount);
-        token0.approve(address(this), swapAmount);
+        weth.mint(address(this), swapAmount);
+        weth.approve(address(this), swapAmount);
 
-        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
-        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+        int256 userBalance0Before = int256(weth.balanceOf(address(this)));
+        int256 userBalance1Before = int256(usdc.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), true, swapAmount, sqrtP(4129), abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), true, swapAmount, sqrtP(4129), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
             (int256(swapAmount), -9318.695291351037641952 ether);
@@ -613,7 +616,7 @@ contract PoolSwapTest is Test, TestUtils {
         assertMany(
             ExpectedMany({
                 pool: pool,
-                tokens: [token0, token1],
+                tokens: [weth, usdc],
                 liquidity: range2.amount,
                 sqrtPriceX96: 5091197434700471409059068614113, // 4129.340643465598
                 tick: 83262,
@@ -677,14 +680,14 @@ contract PoolSwapTest is Test, TestUtils {
         uint256 swapAmount = 0.01337 ether;
 
         // Mint and Approve some ETH tokens to the current test contract
-        token0.mint(address(this), swapAmount);
-        token0.approve(address(this), swapAmount);
+        weth.mint(address(this), swapAmount);
+        weth.approve(address(this), swapAmount);
 
-        int256 userBalance0Before = int256(token0.balanceOf(address(this)));
-        int256 userBalance1Before = int256(token1.balanceOf(address(this)));
+        int256 userBalance0Before = int256(weth.balanceOf(address(this)));
+        int256 userBalance1Before = int256(usdc.balanceOf(address(this)));
 
         (int256 amount0Delta, int256 amount1Delta) =
-            pool.swap(address(this), true, swapAmount, sqrtP(4994), abi.encode(token0, token1, address(this)));
+            pool.swap(address(this), true, swapAmount, sqrtP(4994), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
             (0.012741694827272816 ether, -63.669049964153300768 ether);
@@ -696,7 +699,7 @@ contract PoolSwapTest is Test, TestUtils {
         assertMany(
             ExpectedMany({
                 pool: pool,
-                tokens: [token0, token1],
+                tokens: [weth, usdc],
                 liquidity: liquidity[0].amount,
                 sqrtPriceX96: sqrtP(4994),
                 tick: tick(4994),
@@ -727,10 +730,10 @@ contract PoolSwapTest is Test, TestUtils {
         uint256 swapAmount = 2 ether;
 
         // Mint and Approve some ETH tokens to the current test contract
-        token0.mint(address(this), swapAmount);
-        token0.approve(address(this), swapAmount);
+        weth.mint(address(this), swapAmount);
+        weth.approve(address(this), swapAmount);
 
         vm.expectRevert(encodeError("NotEnoughLiquidity()"));
-        pool.swap(address(this), true, swapAmount, sqrtP(4000), abi.encode(token0, token1, address(this)));
+        pool.swap(address(this), true, swapAmount, sqrtP(4000), callbackData);
     }
 }

@@ -35,7 +35,7 @@ contract PoolTest is Test, TestUtils {
         assertMany(
             ExpectedMany({
                 pool: pool,
-                tokens: [token0, token1],
+                tokens: [weth, usdc],
                 liquidity: liquidity[0].amount,
                 sqrtPriceX96: sqrtP(5000),
                 tick: tick(5000),

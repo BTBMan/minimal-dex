@@ -36,24 +36,24 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
     }
 
     function setupTestCase(MintParams memory mintParams) public returns (uint256 poolBalance0, uint256 poolBalance1) {
-        pool = Pool(factory.createPool(address(token0), address(token1), 1));
+        pool = Pool(factory.createPool(address(weth), address(usdc), 1));
         pool.initialize(sqrtP(mintParams.currentPrice));
 
         nonfungiblePositionManager = new NonfungiblePositionManagerScript(address(factory)).run();
 
         // Mint tokens to this test contract
-        token0.mint(address(this), mintParams.wethBalance);
-        token1.mint(address(this), mintParams.usdcBalance);
+        weth.mint(address(this), mintParams.wethBalance);
+        usdc.mint(address(this), mintParams.usdcBalance);
 
         if (mintParams.mintLiquidity) {
             // Approve the nonfungiblePositionManager to spend the tokens
-            token0.approve(address(nonfungiblePositionManager), mintParams.amount0Desired);
-            token1.approve(address(nonfungiblePositionManager), mintParams.amount1Desired);
+            weth.approve(address(nonfungiblePositionManager), mintParams.amount0Desired);
+            usdc.approve(address(nonfungiblePositionManager), mintParams.amount1Desired);
 
             (poolBalance0, poolBalance1) = nonfungiblePositionManager.mint(
                 INonfungiblePositionManager.MintParams({
-                    token0: address(token0),
-                    token1: address(token1),
+                    token0: address(weth),
+                    token1: address(usdc),
                     recipient: address(this),
                     tickLower: mintParams.tickLower,
                     tickUpper: mintParams.tickUpper,
@@ -88,7 +88,7 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
         assertBalances(
             ExpectedBalances({
                 pool: pool,
-                tokens: [token0, token1],
+                tokens: [weth, usdc],
                 userBalance0: mintParams.wethBalance - expectedAmount0,
                 userBalance1: mintParams.usdcBalance - expectedAmount1,
                 poolBalance0: expectedAmount0,
@@ -112,8 +112,8 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
         });
         setupTestCase(mintParams);
 
-        token0.approve(address(nonfungiblePositionManager), mintParams.amount0Desired);
-        token1.approve(address(nonfungiblePositionManager), mintParams.amount1Desired);
+        weth.approve(address(nonfungiblePositionManager), mintParams.amount0Desired);
+        usdc.approve(address(nonfungiblePositionManager), mintParams.amount1Desired);
 
         uint256 expectedAmount0 = 0.987877509829196393 ether;
         uint256 expectedAmount1 = 4999.999999999999999998 ether;
@@ -125,8 +125,8 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
         );
         nonfungiblePositionManager.mint(
             INonfungiblePositionManager.MintParams({
-                token0: address(token0),
-                token1: address(token1),
+                token0: address(weth),
+                token1: address(usdc),
                 recipient: address(this),
                 tickLower: mintParams.tickLower,
                 tickUpper: mintParams.tickUpper,

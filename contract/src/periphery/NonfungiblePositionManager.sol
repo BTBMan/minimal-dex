@@ -81,7 +81,7 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
             params.tickLower,
             params.tickUpper,
             liquidity,
-            abi.encode(MintCallbackData({token0: params.token0, token1: params.token1, payer: msg.sender}))
+            abi.encode(IPool.CallbackData({token0: params.token0, token1: params.token1, payer: msg.sender}))
         );
 
         // Check the slippage
@@ -91,7 +91,7 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
     }
 
     function mintCallback(uint256 amount0Owed, uint256 amount1Owed, bytes calldata data) external {
-        MintCallbackData memory extra = abi.decode(data, (MintCallbackData));
+        IPool.CallbackData memory extra = abi.decode(data, (IPool.CallbackData));
 
         // The msg.sender is the pool contract
         // Transfer the tokens from the payer to the pool
