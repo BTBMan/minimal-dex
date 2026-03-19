@@ -14,7 +14,7 @@ contract SwapRouterScript is Script, IHelperConfig {
 
         vm.startBroadcast();
 
-        swapRouter = new SwapRouter();
+        // swapRouter = new SwapRouter();
 
         vm.stopBroadcast();
 

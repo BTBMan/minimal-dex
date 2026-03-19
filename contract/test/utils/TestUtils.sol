@@ -10,7 +10,7 @@ import {INonfungiblePositionManager} from "../../src/interfaces/INonfungiblePosi
 import {IMintCallback} from "../../src/interfaces/callback/IMintCallback.sol";
 import {ISwapCallback} from "../../src/interfaces/callback/ISwapCallback.sol";
 import {IFlashCallback} from "../../src/interfaces/callback/IFlashCallback.sol";
-import {ISwapRouter} from "../../src/interfaces/ISwapRouter.sol";
+import {IPool} from "../../src/interfaces/IPool.sol";
 
 /* Libraries *****/
 import {sd, sqrt} from "@prb/math/SD59x18.sol";
@@ -64,10 +64,19 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
     // functions             //
     ////////////////////////////////////
     function setUp() public virtual {
-        token0 = new ERC20Mock();
-        token1 = new ERC20Mock();
-        factory = new Factory();
+        ERC20Mock _tokenA = new ERC20Mock();
+        ERC20Mock _tokenB = new ERC20Mock();
 
+        // Ensure token0 address < token1 address (same rule as Factory)
+        if (address(_tokenA) < address(_tokenB)) {
+            token0 = _tokenA;
+            token1 = _tokenB;
+        } else {
+            token0 = _tokenB;
+            token1 = _tokenA;
+        }
+
+        factory = new Factory();
         vm.deal(user, STARTING_BALANCE);
     }
 
@@ -131,7 +140,7 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
     }
 
     function swapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata data) external virtual override {
-        ISwapRouter.SwapCallbackData memory extra = abi.decode(data, (ISwapRouter.SwapCallbackData));
+        IPool.CallbackData memory extra = abi.decode(data, (IPool.CallbackData));
 
         // The msg.sender is the pool contract, only one of these tokens can be transferred
         // Transfer the tokens from the payer to the pool

@@ -11,6 +11,12 @@ interface IPool {
         // Current tick
         int24 tick;
     }
+
+    struct CallbackData {
+        address token0;
+        address token1;
+        address payer;
+    }
     ////////////////////////////////////
     // Events                         //
     ////////////////////////////////////
