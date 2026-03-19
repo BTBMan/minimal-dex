@@ -5,7 +5,6 @@ interface INonfungiblePositionManager {
     struct MintParams {
         address token0;
         address token1;
-        address poolAddress;
         // The LP token recipient
         address recipient;
         int24 tickLower;

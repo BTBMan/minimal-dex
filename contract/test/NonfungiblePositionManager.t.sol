@@ -60,11 +60,26 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
                     amount0Desired: mintParams.amount0Desired,
                     amount1Desired: mintParams.amount1Desired,
                     amount0Min: mintParams.amount0Min,
-                    amount1Min: mintParams.amount1Min,
-                    poolAddress: address(pool)
+                    amount1Min: mintParams.amount1Min
                 })
             );
         }
+    }
+
+    function testInitializeSuccess() public {
+        nonfungiblePositionManager = new NonfungiblePositionManagerScript(address(factory)).run();
+
+        uint160 initializedSqrtPriceX96 = sqrtP(5000);
+
+        pool = Pool(
+            nonfungiblePositionManager.createAndInitializePoolIfNecessary(
+                address(weth), address(usdc), 1, initializedSqrtPriceX96
+            )
+        );
+
+        (uint160 sqrtPriceX96,) = pool.slot0();
+
+        assertEq(sqrtPriceX96, initializedSqrtPriceX96);
     }
 
     function testAddPositionSuccess() public {
@@ -133,8 +148,7 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
                 amount0Desired: mintParams.amount0Desired,
                 amount1Desired: mintParams.amount1Desired,
                 amount0Min: mintParams.amount0Min,
-                amount1Min: mintParams.amount1Min,
-                poolAddress: address(pool)
+                amount1Min: mintParams.amount1Min
             })
         );
     }

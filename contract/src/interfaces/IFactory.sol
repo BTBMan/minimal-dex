@@ -8,6 +8,8 @@ interface IFactory {
     error UnsupportedTickSpacing();
     error Token0CannotBeZero();
     error PoolAlreadyExists();
+    error TokenCannotBeZero();
 
+    function getPool(address tokenA, address tokenB, int24 tickSpacing) external returns (address pool);
     function createPool(address tokenA, address tokenB, int24 tickSpacing) external returns (address pool);
 }

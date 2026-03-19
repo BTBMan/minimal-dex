@@ -122,7 +122,7 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
         });
     }
 
-    function encodeCallbackData(address _token0, address _token1, address payer) public returns (bytes memory) {
+    function encodeCallbackData(address _token0, address _token1, address payer) public pure returns (bytes memory) {
         return abi.encode(IPool.CallbackData({token0: _token0, token1: _token1, payer: payer}));
     }
 

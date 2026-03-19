@@ -17,7 +17,7 @@ contract NonfungiblePositionManagerScript is Script, HelperConfig {
     function run() public returns (NonfungiblePositionManager nonfungiblePositionManager) {
         vm.startBroadcast();
 
-        nonfungiblePositionManager = new NonfungiblePositionManager();
+        nonfungiblePositionManager = new NonfungiblePositionManager(factory);
 
         vm.stopBroadcast();
     }

@@ -13,6 +13,7 @@ import {INonfungiblePositionManager} from "../interfaces/INonfungiblePositionMan
 import {IMintCallback} from "../interfaces/callback/IMintCallback.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPool} from "../interfaces/IPool.sol";
+import {IFactory} from "../interfaces/IFactory.sol";
 
 /* Libraries *****/
 import {TickMath} from "../libraries/TickMath.sol";
@@ -31,6 +32,8 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
     ////////////////////////////////////
     // State variables                //
     ////////////////////////////////////
+    // The address of the factory contract
+    address public immutable factory;
 
     ////////////////////////////////////
     // Events                         //
@@ -44,7 +47,9 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
     // Modifiers                      //
     ////////////////////////////////////
 
-    constructor() {}
+    constructor(address _factory) {
+        factory = _factory;
+    }
 
     ////////////////////////////////////
     // Receive & Fallback             //
@@ -56,13 +61,10 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
     /**
      * @notice Create and initialize the pool if it does not exist
      */
-    // function createAndInitializePoolIfNecessary() external {
-    //     //
-    // }
 
     function mint(MintParams calldata params) public returns (uint256 amount0, uint256 amount1) {
         // Get pool contract
-        IPool pool = IPool(params.poolAddress);
+        IPool pool = IPool(IFactory(factory).getPool(params.token0, params.token1, 1));
 
         // Get current sqrt price of the current pool
         (uint160 sqrtPriceX96,) = pool.slot0();
@@ -81,12 +83,29 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
             params.tickLower,
             params.tickUpper,
             liquidity,
-            abi.encode(IPool.CallbackData({token0: params.token0, token1: params.token1, payer: msg.sender}))
+            abi.encode(IPool.CallbackData({token0: pool.token0(), token1: pool.token1(), payer: msg.sender}))
         );
 
         // Check the slippage
         if (amount0 < params.amount0Min || amount1 < params.amount1Min) {
             revert SlippageCheckFailed(amount0, amount1);
+        }
+    }
+
+    function createAndInitializePoolIfNecessary(address tokenA, address tokenB, int24 tickSpacing, uint160 sqrtPriceX96)
+        public
+        returns (address pool)
+    {
+        pool = IFactory(factory).getPool(tokenA, tokenB, tickSpacing);
+
+        if (pool == address(0)) {
+            pool = IFactory(factory).createPool(tokenA, tokenB, tickSpacing);
+            IPool(pool).initialize(sqrtPriceX96);
+        } else {
+            (uint160 sqrtPriceX96Existing,) = IPool(pool).slot0();
+            if (sqrtPriceX96Existing == 0) {
+                IPool(pool).initialize(sqrtPriceX96);
+            }
         }
     }
 
