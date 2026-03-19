@@ -179,6 +179,37 @@ contract SwapRouter is ISwapRouter, ISwapCallback {
     }
 
     /**
+     * @notice Performs a single exact out swap
+     */
+    function exactOutputInternal(
+        uint256 amountOut,
+        address recipient,
+        uint160 sqrtPriceLimitX96,
+        SwapCallbackData memory data
+    ) private returns (uint256 amountIn) {
+        // // Extract the first pool parameters
+        // (address tokenIn, address tokenOut, int24 tickSpacing) = data.path.decodeFirstPool();
+
+        // // Determine the swap direction
+        // bool zeroForOne = tokenIn < tokenOut;
+
+        // // Execute the swap function
+        // (int256 amount0Delta, int256 amount1Delta) = getPool(tokenIn, tokenOut, tickSpacing)
+        //     .swap(
+        //         recipient,
+        //         zeroForOne,
+        //         amountOut,
+        //         sqrtPriceLimitX96 == 0
+        //             ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
+        //             : sqrtPriceLimitX96,
+        //         (abi.encode(data))
+        //     );
+
+        // // Find the output amount
+        // amountOut = uint256(-(zeroForOne ? amount1 : amount0));
+    }
+
+    /**
      * @notice Single pool swap, calculate the as little as possible input amount for given output amount
      */
     function exactOutputSingle(ExactOutputSingleParams memory params) external returns (uint256 amountIn) {
