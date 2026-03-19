@@ -3,13 +3,11 @@ pragma solidity ^0.8.27;
 
 import {Script} from "forge-std/Script.sol";
 
-interface IHelperConfig {
+contract HelperConfig is Script {
     struct NetworkConfig {
         uint256 deployerKey;
     }
-}
 
-contract HelperConfig is Script, IHelperConfig {
     NetworkConfig public activeNetworkConfig;
 
     constructor() {

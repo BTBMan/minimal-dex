@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 /* Imports *******/
 import {Test, console} from "forge-std/Test.sol";
 import {ERC20Mock} from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
+import {NonfungiblePositionManagerScript} from "../script/NonfungiblePositionManager.s.sol";
 import {Pool} from "../src/core/Pool.sol";
 import {Factory} from "../src/core/Factory.sol";
 import {TestUtils} from "./utils/TestUtils.sol";
@@ -38,7 +39,7 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
         pool = Pool(factory.createPool(address(token0), address(token1), 1));
         pool.initialize(sqrtP(mintParams.currentPrice));
 
-        nonfungiblePositionManager = new NonfungiblePositionManager();
+        nonfungiblePositionManager = new NonfungiblePositionManagerScript(address(factory)).run();
 
         // Mint tokens to this test contract
         token0.mint(address(this), mintParams.wethBalance);

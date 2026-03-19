@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import "forge-std/Test.sol";
+import {FactoryScript} from "../../script/Factory.s.sol";
 import {Pool} from "../../src/core/Pool.sol";
 import {Factory} from "../../src/core/Factory.sol";
 
@@ -76,7 +77,7 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
             token1 = _tokenA;
         }
 
-        factory = new Factory();
+        factory = new FactoryScript().run();
         vm.deal(user, STARTING_BALANCE);
     }
 
