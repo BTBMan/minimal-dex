@@ -47,9 +47,9 @@ library PoolAddress {
                 uint256(
                     keccak256(
                         abi.encodePacked(
-                            "0xff",
+                            hex"ff",
                             factory,
-                            keccak256(abi.encodePacked(key.token0, key.token1, key.tickSpacing)),
+                            keccak256(abi.encode(key.token0, key.token1, key.tickSpacing)),
                             keccak256(type(Pool).creationCode)
                         )
                     )

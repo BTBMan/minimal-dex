@@ -63,7 +63,7 @@ contract Factory is IFactory, PoolDeployer {
     ////////////////////////////////////
     // Public functions               //
     ////////////////////////////////////
-    function getPool(address tokenA, address tokenB, int24 tickSpacing) public override returns (address pool) {
+    function getPool(address tokenA, address tokenB, int24 tickSpacing) public view override returns (address pool) {
         if (tokenA == tokenB) {
             revert TokensMustBeDifferent();
         }

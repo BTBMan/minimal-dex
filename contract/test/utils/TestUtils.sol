@@ -42,6 +42,34 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
         bool mintLiquidity;
     }
 
+    struct MintParams {
+        uint256 wethBalance;
+        uint256 usdcBalance;
+        uint160 currentPrice;
+        int24 tickLower;
+        int24 tickUpper;
+        uint256 amount0Desired;
+        uint256 amount1Desired;
+        uint256 amount0Min;
+        uint256 amount1Min;
+        bool mintLiquidity;
+    }
+
+    struct MultiplePoolParams {
+        address token0;
+        address token1;
+        uint256 token0Balance;
+        uint256 token1Balance;
+        uint160 currentPrice;
+        int24 tickLower;
+        int24 tickUpper;
+        uint256 amount0Desired;
+        uint256 amount1Desired;
+        uint256 amount0Min;
+        uint256 amount1Min;
+        bool mintLiquidity;
+    }
+
     Factory public factory;
     Pool public pool;
     ERC20Mock public weth; // ETH

@@ -70,7 +70,7 @@ contract PoolDeployer is IPoolDeployer {
         returns (address pool)
     {
         parameters = Parameters({factory: factory, token0: token0, token1: token1, tickSpacing: tickSpacing});
-        pool = address(new Pool{salt: keccak256(abi.encodePacked(token0, token1, tickSpacing))}());
+        pool = address(new Pool{salt: keccak256(abi.encode(token0, token1, tickSpacing))}());
         delete parameters;
     }
 
