@@ -120,35 +120,37 @@ contract SwapRouterTest is Test, TestUtils {
             amount1Min: 0,
             mintLiquidity: true
         });
-        // MultiplePoolParams memory mintParams2 = MultiplePoolParams({
-        //     token0: address(usdc),
-        //     token1: address(usdt),
-        //     token0Balance: 10000 ether,
-        //     token1Balance: 10000 ether,
-        //     currentPrice: 1,
-        //     tickLower: tick(0),
-        //     tickUpper: tick(2),
-        //     amount0Desired: 10000 ether,
-        //     amount1Desired: 10000 ether,
-        //     amount0Min: 0,
-        //     amount1Min: 0,
-        //     mintLiquidity: true
-        // });
-        // MultiplePoolParams memory mintParams3 = MultiplePoolParams({
-        //     token0: address(wbtc),
-        //     token1: address(usdt),
-        //     token0Balance: 1 ether,
-        //     token1Balance: 10000 ether,
-        //     currentPrice: 10000,
-        //     tickLower: tick(9000),
-        //     tickUpper: tick(15000),
-        //     amount0Desired: 1 ether,
-        //     amount1Desired: 10000 ether,
-        //     amount0Min: 0,
-        //     amount1Min: 0,
-        //     mintLiquidity: true
-        // });
+        MultiplePoolParams memory mintParams2 = MultiplePoolParams({
+            token0: address(usdc),
+            token1: address(usdt),
+            token0Balance: 10000 ether,
+            token1Balance: 10000 ether,
+            currentPrice: 1,
+            tickLower: tick(1),
+            tickUpper: tick(2),
+            amount0Desired: 10000 ether,
+            amount1Desired: 10000 ether,
+            amount0Min: 0,
+            amount1Min: 0,
+            mintLiquidity: true
+        });
+        MultiplePoolParams memory mintParams3 = MultiplePoolParams({
+            token0: address(wbtc),
+            token1: address(usdt),
+            token0Balance: 1 ether,
+            token1Balance: 10000 ether,
+            currentPrice: 10000,
+            tickLower: tick(9000),
+            tickUpper: tick(15000),
+            amount0Desired: 1 ether,
+            amount1Desired: 10000 ether,
+            amount0Min: 0,
+            amount1Min: 0,
+            mintLiquidity: true
+        });
         setupTestCase(mintParams1);
+        setupTestCase(mintParams2);
+        setupTestCase(mintParams3);
 
         uint256 swapAmount = 1 ether;
 
@@ -156,20 +158,25 @@ contract SwapRouterTest is Test, TestUtils {
         weth.mint(address(this), swapAmount);
         weth.approve(address(swapRouter), swapAmount);
 
-        // uint256 amountOut = swapRouter.exactInputSingle(
-        //     ISwapRouter.ExactInputSingleParams({
-        //         tokenIn: address(weth),
-        //         tokenOut: address(wbtc),
-        //         tickSpacing: 1,
-        //         amountIn: swapAmount,
-        //         sqrtPriceLimitX96: 0
-        //     })
-        // );
+        uint256 amountOut = swapRouter.exactInput(
+            ISwapRouter.ExactInputParams({
+                path: bytes.concat(
+                    bytes20(address(weth)),
+                    bytes3(uint24(1)),
+                    bytes20(address(usdc)),
+                    bytes3(uint24(1)),
+                    bytes20(address(usdt)),
+                    bytes3(uint24(1)),
+                    bytes20(address(wbtc))
+                ),
+                recipient: address(this),
+                amountIn: swapAmount,
+                amountOutMinimum: 0
+            })
+        );
 
-        // console.log(amountOut);
+        uint256 expectedAmountOut = 0.396279562407372129 ether;
 
-        // uint256 expectedAmount0Delta = 0.008396837685175036 ether;
-
-        // assertEq(amountOut, expectedAmount0Delta);
+        assertEq(amountOut, expectedAmountOut);
     }
 }
