@@ -3,23 +3,23 @@ pragma solidity ^0.8.13;
 
 /* Imports *******/
 import {Test, console} from "forge-std/Test.sol";
-import {SwapRouterScript} from "../script/SwapRouter.s.sol";
+import {QuoterScript} from "../script/Quoter.s.sol";
 import {NonfungiblePositionManagerScript} from "../script/NonfungiblePositionManager.s.sol";
 import {TestUtils} from "./utils/TestUtils.sol";
-import {SwapRouter} from "../src/periphery/SwapRouter.sol";
+import {Quoter} from "../src/periphery/lens/Quoter.sol";
 import {Pool} from "../src/core/Pool.sol";
 import {NonfungiblePositionManager} from "../src/periphery/NonfungiblePositionManager.sol";
 
 /* Interfaces ****/
 import {ERC20Mock} from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
-import {ISwapRouter} from "../src/interfaces/ISwapRouter.sol";
+import {IQuoter} from "../src/interfaces/IQuoter.sol";
 import {INonfungiblePositionManager} from "../src/interfaces/INonfungiblePositionManager.sol";
 
 /* Libraries *****/
 
-contract SwapRouterTest is Test, TestUtils {
+contract QuoterTest is Test, TestUtils {
     NonfungiblePositionManager nonfungiblePositionManager;
-    SwapRouter swapRouter;
+    Quoter quoter;
 
     ERC20Mock public usdt; // USDT
     ERC20Mock public wbtc; // BTC
@@ -64,10 +64,10 @@ contract SwapRouterTest is Test, TestUtils {
             );
         }
 
-        swapRouter = new SwapRouterScript(address(factory)).run();
+        quoter = new QuoterScript(address(factory)).run();
     }
 
-    function testExactInputUSDCToETHInSinglePoolSuccess() public {
+    function testQuoterExactInputUSDCToETHInSinglePoolSuccess() public {
         MultiplePoolParams memory mintParams = MultiplePoolParams({
             token0: address(weth),
             token1: address(usdc),
@@ -88,24 +88,16 @@ contract SwapRouterTest is Test, TestUtils {
 
         // Mint and Approve some USDC tokens to the current test contract
         usdc.mint(address(this), swapAmount);
-        usdc.approve(address(swapRouter), swapAmount);
+        usdc.approve(address(quoter), swapAmount);
 
-        uint256 amountOut = swapRouter.exactInputSingle(
-            ISwapRouter.ExactInputSingleParams({
-                tokenIn: address(usdc),
-                tokenOut: address(weth),
-                tickSpacing: 1,
-                amountIn: swapAmount,
-                sqrtPriceLimitX96: 0
-            })
-        );
+        uint256 amountOut = quoter.quoteExactInputSingle(address(usdc), address(weth), 1, swapAmount, 0);
 
         uint256 expectedAmountOut = 0.008396837685175036 ether;
 
         assertEq(amountOut, expectedAmountOut);
     }
 
-    function testExactInputETHToBTCInMultiplePoolsSuccess() public {
+    function testQuoterExactInputETHToBTCInMultiplePoolsSuccess() public {
         MultiplePoolParams memory mintParams1 = MultiplePoolParams({
             token0: address(weth),
             token1: address(usdc),
@@ -156,23 +148,19 @@ contract SwapRouterTest is Test, TestUtils {
 
         // Mint and Approve some ETH tokens to the current test contract
         weth.mint(address(this), swapAmount);
-        weth.approve(address(swapRouter), swapAmount);
+        weth.approve(address(quoter), swapAmount);
 
-        uint256 amountOut = swapRouter.exactInput(
-            ISwapRouter.ExactInputParams({
-                path: bytes.concat(
-                    bytes20(address(weth)),
-                    bytes3(uint24(1)),
-                    bytes20(address(usdc)),
-                    bytes3(uint24(1)),
-                    bytes20(address(usdt)),
-                    bytes3(uint24(1)),
-                    bytes20(address(wbtc))
-                ),
-                recipient: address(this),
-                amountIn: swapAmount,
-                amountOutMinimum: 0
-            })
+        uint256 amountOut = quoter.quoteExactInput(
+            bytes.concat(
+                bytes20(address(weth)),
+                bytes3(uint24(1)),
+                bytes20(address(usdc)),
+                bytes3(uint24(1)),
+                bytes20(address(usdt)),
+                bytes3(uint24(1)),
+                bytes20(address(wbtc))
+            ),
+            swapAmount
         );
 
         uint256 expectedAmountOut = 0.396279562407372129 ether;

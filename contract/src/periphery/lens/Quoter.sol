@@ -68,7 +68,7 @@ contract Quoter is IQuoter, ISwapCallback {
 
         bool zeroForOne = tokenIn < tokenOut;
 
-        uint256 amountToPay = zeroForOne ? uint256(amount0Delta) : uint256(amount1Delta);
+        uint256 amountToPay = zeroForOne ? uint256(-amount1Delta) : uint256(-amount0Delta);
 
         assembly {
             let ptr := mload(0x40)

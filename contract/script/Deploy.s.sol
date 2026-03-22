@@ -5,10 +5,12 @@ import {Script, console} from "forge-std/Script.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 import {FactoryScript} from "./Factory.s.sol";
 import {SwapRouterScript} from "./SwapRouter.s.sol";
+import {QuoterScript} from "./Quoter.s.sol";
 import {NonfungiblePositionManagerScript} from "./NonfungiblePositionManager.s.sol";
 
 import {Factory} from "../src/core/Factory.sol";
 import {SwapRouter} from "../src/periphery/SwapRouter.sol";
+import {Quoter} from "../src/periphery/lens/Quoter.sol";
 import {NonfungiblePositionManager} from "../src/periphery/NonfungiblePositionManager.sol";
 
 /**
@@ -18,21 +20,30 @@ import {NonfungiblePositionManager} from "../src/periphery/NonfungiblePositionMa
 contract DeployScript is Script, HelperConfig {
     function run()
         public
-        returns (Factory factory, SwapRouter swapRouter, NonfungiblePositionManager nonfungiblePositionManager)
+        returns (
+            Factory factory,
+            NonfungiblePositionManager nonfungiblePositionManager,
+            SwapRouter swapRouter,
+            Quoter quoter
+        )
     {
         vm.startBroadcast(activeNetworkConfig.deployerKey);
 
-        // ── 1. Deploy Factory Contract ──────────────────────────
+        // ── Deploy Factory Contract ──────────────────────────
         factory = new FactoryScript().run();
         console.log("Factory deployed at:                   ", address(factory));
 
-        // ── 2. Deploy SwapRouter Contract ──────────────────────────
+        // ── Deploy NonfungiblePositionManager Contract ──────────────────────────
+        nonfungiblePositionManager = new NonfungiblePositionManagerScript(address(factory)).run();
+        console.log("NonfungiblePositionManager deployed at:", address(nonfungiblePositionManager));
+
+        // ── Deploy SwapRouter Contract ──────────────────────────
         swapRouter = new SwapRouterScript(address(factory)).run();
         console.log("SwapRouter deployed at:                ", address(swapRouter));
 
-        // ── 3. Deploy NonfungiblePositionManager Contract ──────────────────────────
-        nonfungiblePositionManager = new NonfungiblePositionManagerScript(address(factory)).run();
-        console.log("NonfungiblePositionManager deployed at:", address(nonfungiblePositionManager));
+        // ── Deploy Quoter Contract ──────────────────────────
+        quoter = new QuoterScript(address(factory)).run();
+        console.log("Quoter deployed at:                    ", address(quoter));
 
         vm.stopBroadcast();
     }
