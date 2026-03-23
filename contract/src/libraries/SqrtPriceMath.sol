@@ -52,6 +52,9 @@ library SqrtPriceMath {
         pure
         returns (uint160)
     {
+        // we short circuit amount == 0 because the result is otherwise not guaranteed to equal the input price
+        if (amount == 0) return sqrtPX96;
+
         uint256 numerator = uint256(liquidity) << FixedPoint96.RESOLUTION;
         uint256 denominator;
         bool overflow;

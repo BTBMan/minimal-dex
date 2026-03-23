@@ -67,7 +67,7 @@ abstract contract Assertions is Test {
     }
 
     function assertTick(ExpectedTick memory expected) internal view {
-        (bool initialized, uint128 liquidityGross, int128 liquidityNet) = expected.pool.ticks(expected.tick);
+        (bool initialized, uint128 liquidityGross, int128 liquidityNet,,) = expected.pool.ticks(expected.tick);
         assertEq(initialized, expected.initialized, "incorrect tick initialized state");
         assertEq(liquidityGross, expected.liquidityGross, "incorrect tick gross liquidity");
         assertEq(liquidityNet, expected.liquidityNet, "incorrect tick net liquidity");

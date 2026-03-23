@@ -118,6 +118,109 @@ contract Pool is IPool {
         emit Initialize(sqrtPriceX96, tick);
     }
 
+    struct ModifyPositionParams {
+        // the address that owns the position
+        address owner;
+        // the lower and upper tick of the position
+        int24 tickLower;
+        int24 tickUpper;
+        // any change in liquidity
+        int128 liquidityDelta;
+    }
+
+    /**
+     * @notice Public function to modify the position
+     */
+    function _modifyPosition(ModifyPositionParams memory params)
+        private
+        returns (Position.Info storage position, int256 amount0, int256 amount1)
+    {
+        // Invalid tick range
+        if (params.tickLower >= params.tickUpper || params.tickLower < MIN_TICK || params.tickUpper > MAX_TICK) {
+            revert InvalidTickRange();
+        }
+
+        position = _updatePosition(params.owner, params.tickLower, params.tickUpper, params.liquidityDelta, slot0.tick);
+
+        Slot0 memory _slot0 = slot0;
+
+        // Determine if the current price is within the tick range to calculate amount0 and amount1
+        if (_slot0.tick < params.tickLower) {
+            // Out of range, amount1(token y) is 0, need to calculate amount0(token x)
+            amount0 = int256(
+                SqrtPriceMath.getAmount0Delta(
+                    TickMath.getSqrtRatioAtTick(params.tickLower),
+                    TickMath.getSqrtRatioAtTick(params.tickUpper),
+                    uint128(params.liquidityDelta),
+                    true
+                )
+            );
+        } else if (_slot0.tick < params.tickUpper) {
+            // In range, need to calculate both amount0(token x) and amount1(token y)
+            amount0 = int256(
+                SqrtPriceMath.getAmount0Delta(
+                    _slot0.sqrtPriceX96,
+                    TickMath.getSqrtRatioAtTick(params.tickUpper),
+                    uint128(params.liquidityDelta),
+                    true
+                )
+            );
+
+            amount1 = int256(
+                SqrtPriceMath.getAmount1Delta(
+                    _slot0.sqrtPriceX96,
+                    TickMath.getSqrtRatioAtTick(params.tickLower),
+                    uint128(params.liquidityDelta),
+                    true
+                )
+            );
+
+            // Update liquidity
+            liquidity = LiquidityMath.addDelta(liquidity, params.liquidityDelta);
+        } else {
+            // Out of range, amount0(token x) is 0, need to calculate amount1(token y)
+            amount1 = int256(
+                SqrtPriceMath.getAmount1Delta(
+                    TickMath.getSqrtRatioAtTick(params.tickLower),
+                    TickMath.getSqrtRatioAtTick(params.tickUpper),
+                    uint128(params.liquidityDelta),
+                    true
+                )
+            );
+        }
+    }
+
+    function _updatePosition(address owner, int24 tickLower, int24 tickUpper, int128 liquidityDelta, int24 tick)
+        private
+        returns (Position.Info storage position)
+    {
+        position = positions.get(owner, tickLower, tickUpper);
+
+        uint256 _feeGrowthGlobal0X128 = feeGrowthGlobal0X128;
+        uint256 _feeGrowthGlobal1X128 = feeGrowthGlobal1X128;
+
+        // Update tick info
+        bool flippedLower =
+            ticks.update(tickLower, tick, int128(liquidityDelta), _feeGrowthGlobal0X128, _feeGrowthGlobal1X128, false);
+        bool flippedUpper =
+            ticks.update(tickUpper, tick, int128(liquidityDelta), _feeGrowthGlobal0X128, _feeGrowthGlobal1X128, true);
+
+        // Update tick bitmap liquidity
+        if (flippedLower) {
+            tickBitmap.flipTick(tickLower, tickSpacing);
+        }
+        if (flippedUpper) {
+            tickBitmap.flipTick(tickUpper, tickSpacing);
+        }
+
+        // Get fee growth inside two ticks
+        (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) =
+            ticks.getFeeGrowthInside(tickLower, tickUpper, tick, _feeGrowthGlobal0X128, _feeGrowthGlobal1X128);
+
+        // Update position info
+        position.update(int128(liquidityDelta), feeGrowthInside0X128, feeGrowthInside1X128);
+    }
+
     /**
      * @notice Provide liquidity
      * @param owner The owner of the position
@@ -130,66 +233,19 @@ contract Pool is IPool {
         external
         returns (uint256 amount0, uint256 amount1)
     {
-        // Invalid tick range
-        if (tickLower >= tickUpper || tickLower < MIN_TICK || tickUpper > MAX_TICK) {
-            revert InvalidTickRange();
-        }
-
         // Invalid amount
         if (amount == 0) {
             revert ZeroLiquidity();
         }
 
-        Slot0 memory _slot0 = slot0;
-        uint256 _feeGrowthGlobal0X128 = feeGrowthGlobal0X128;
-        uint256 _feeGrowthGlobal1X128 = feeGrowthGlobal1X128;
+        (, int256 amount0Int, int256 amount1Int) = _modifyPosition(
+            ModifyPositionParams({
+                owner: owner, tickLower: tickLower, tickUpper: tickUpper, liquidityDelta: int128(amount)
+            })
+        );
 
-        // Update tick info
-        bool flippedLower =
-            ticks.update(tickLower, _slot0.tick, int128(amount), _feeGrowthGlobal0X128, _feeGrowthGlobal1X128, false);
-        bool flippedUpper =
-            ticks.update(tickUpper, _slot0.tick, int128(amount), _feeGrowthGlobal0X128, _feeGrowthGlobal1X128, true);
-
-        // Update tick bitmap liquidity
-        if (flippedLower) {
-            tickBitmap.flipTick(tickLower, tickSpacing);
-        }
-        if (flippedUpper) {
-            tickBitmap.flipTick(tickUpper, tickSpacing);
-        }
-
-        // Get fee growth inside two ticks
-        (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) =
-            ticks.getFeeGrowthInside(tickLower, tickUpper, _slot0.tick, _feeGrowthGlobal0X128, _feeGrowthGlobal1X128);
-
-        // Update position info
-        Position.Info storage position = positions.get(owner, tickLower, tickUpper);
-        position.update(int128(amount), feeGrowthInside0X128, feeGrowthInside1X128);
-
-        // Determine if the current price is within the tick range to calculate amount0 and amount1
-        if (_slot0.tick < tickLower) {
-            // Out of range, amount1(token y) is 0, need to calculate amount0(token x)
-            amount0 = SqrtPriceMath.getAmount0Delta(
-                TickMath.getSqrtRatioAtTick(tickLower), TickMath.getSqrtRatioAtTick(tickUpper), amount, true
-            );
-        } else if (_slot0.tick < tickUpper) {
-            // In range, need to calculate both amount0(token x) and amount1(token y)
-            amount0 = SqrtPriceMath.getAmount0Delta(
-                _slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickUpper), amount, true
-            );
-
-            amount1 = SqrtPriceMath.getAmount1Delta(
-                _slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(tickLower), amount, true
-            );
-
-            // Update liquidity
-            liquidity += amount;
-        } else {
-            // Out of range, amount0(token x) is 0, need to calculate amount1(token y)
-            amount1 = SqrtPriceMath.getAmount1Delta(
-                TickMath.getSqrtRatioAtTick(tickLower), TickMath.getSqrtRatioAtTick(tickUpper), amount, true
-            );
-        }
+        amount0 = uint256(amount0Int);
+        amount1 = uint256(amount1Int);
 
         // Get token from user
         uint256 balance0Before;
@@ -216,6 +272,20 @@ contract Pool is IPool {
         }
 
         emit Mint(msg.sender, owner, tickLower, tickUpper, amount, amount0, amount1);
+    }
+
+    function collect() external {
+        //
+    }
+
+    /**
+     * @notice Remove the liquidity
+     * @param tickLower The lower tick of the position
+     * @param tickUpper The upper tick of the position
+     * @param amount The amount of liquidity to remove
+     */
+    function burn(int24 tickLower, int24 tickUpper, uint128 amount) external {
+        //
     }
 
     struct SwapState {
@@ -344,7 +414,8 @@ contract Pool is IPool {
             }
 
             // Update state
-            state.amountSpecifiedRemaining -= step.amountIn;
+            // amountSpecifiedRemaining = amountSpecifiedRemaining - (net amount in + amount in fee)
+            state.amountSpecifiedRemaining -= (step.amountIn + step.feeAmount);
             state.amountCalculated += step.amountOut;
         }
 
