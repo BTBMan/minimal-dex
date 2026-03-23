@@ -62,8 +62,26 @@ interface IPool {
     function token0() external view returns (address);
     function token1() external view returns (address);
 
-    function positions(bytes32 positionKey) external view returns (uint128 liquidity);
-    function ticks(int24 tick) external view returns (bool initialized, uint128 liquidityGross, int128 liquidityNet);
+    function positions(bytes32 positionKey)
+        external
+        view
+        returns (
+            uint128 liquidity,
+            uint256 feeGrowthInside0LastX128,
+            uint256 feeGrowthInside1LastX128,
+            uint128 tokensOwed0,
+            uint128 tokensOwed1
+        );
+    function ticks(int24 tick)
+        external
+        view
+        returns (
+            bool initialized,
+            uint128 liquidityGross,
+            int128 liquidityNet,
+            uint256 feeGrowthOutside0X128,
+            uint256 feeGrowthOutside1X128
+        );
     function slot0() external view returns (uint160 sqrtPriceX96, int24 tick);
     function liquidity() external view returns (uint128 liquidity);
 

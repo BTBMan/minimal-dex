@@ -141,10 +141,14 @@ contract Pool is IPool {
         }
 
         Slot0 memory _slot0 = slot0;
+        uint256 _feeGrowthGlobal0X128 = feeGrowthGlobal0X128;
+        uint256 _feeGrowthGlobal1X128 = feeGrowthGlobal1X128;
 
         // Update tick info
-        bool flippedLower = ticks.update(tickLower, int128(amount), false);
-        bool flippedUpper = ticks.update(tickUpper, int128(amount), true);
+        bool flippedLower =
+            ticks.update(tickLower, _slot0.tick, int128(amount), _feeGrowthGlobal0X128, _feeGrowthGlobal1X128, false);
+        bool flippedUpper =
+            ticks.update(tickUpper, _slot0.tick, int128(amount), _feeGrowthGlobal0X128, _feeGrowthGlobal1X128, true);
 
         // Update tick bitmap liquidity
         if (flippedLower) {
@@ -154,9 +158,13 @@ contract Pool is IPool {
             tickBitmap.flipTick(tickUpper, tickSpacing);
         }
 
+        // Get fee growth inside two ticks
+        (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) =
+            ticks.getFeeGrowthInside(tickLower, tickUpper, _slot0.tick, _feeGrowthGlobal0X128, _feeGrowthGlobal1X128);
+
         // Update position info
         Position.Info storage position = positions.get(owner, tickLower, tickUpper);
-        position.update(amount);
+        position.update(int128(amount), feeGrowthInside0X128, feeGrowthInside1X128);
 
         // Determine if the current price is within the tick range to calculate amount0 and amount1
         if (_slot0.tick < tickLower) {

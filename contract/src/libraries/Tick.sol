@@ -24,10 +24,57 @@ library Tick {
         uint256 feeGrowthOutside1X128;
     }
 
-    function update(mapping(int24 tick => Info) storage self, int24 tick, int128 liquidityDelta, bool upper)
-        internal
-        returns (bool flipped)
-    {
+    /**
+     * @notice Get all fees inside the tick lower and tick upper
+     */
+    function getFeeGrowthInside(
+        mapping(int24 tick => Info) storage self,
+        int24 _tickLower,
+        int24 _tickUpper,
+        int24 currentTick,
+        uint256 feeGrowthGlobal0X128,
+        uint256 feeGrowthGlobal1X128
+    ) internal view returns (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) {
+        Info storage lower = self[_tickLower];
+        Info storage upper = self[_tickUpper];
+
+        // Calculate the fee growth below
+        uint256 feeGrowthBelow0X128;
+        uint256 feeGrowthBelow1X128;
+        if (currentTick >= _tickLower) {
+            feeGrowthBelow0X128 = lower.feeGrowthOutside0X128;
+            feeGrowthBelow1X128 = lower.feeGrowthOutside1X128;
+        } else {
+            // Remove the inside fee
+            feeGrowthBelow0X128 = feeGrowthGlobal0X128 - lower.feeGrowthOutside0X128;
+            feeGrowthBelow1X128 = feeGrowthGlobal1X128 - lower.feeGrowthOutside1X128;
+        }
+
+        // Calculate the fee growth above
+        uint256 feeGrowthAbove0X128;
+        uint256 feeGrowthAbove1X128;
+        if (currentTick < _tickUpper) {
+            feeGrowthAbove0X128 = upper.feeGrowthOutside0X128;
+            feeGrowthAbove1X128 = upper.feeGrowthOutside1X128;
+        } else {
+            // Remove the inside fee
+            feeGrowthAbove0X128 = feeGrowthGlobal0X128 - upper.feeGrowthOutside0X128;
+            feeGrowthAbove1X128 = feeGrowthGlobal1X128 - upper.feeGrowthOutside1X128;
+        }
+
+        feeGrowthInside0X128 = feeGrowthGlobal0X128 - feeGrowthAbove0X128 - feeGrowthBelow0X128;
+        feeGrowthInside1X128 = feeGrowthGlobal1X128 - feeGrowthAbove1X128 - feeGrowthBelow1X128;
+    }
+
+    function update(
+        mapping(int24 tick => Info) storage self,
+        int24 tick,
+        int24 currentTick,
+        int128 liquidityDelta,
+        uint256 feeGrowthGlobal0X128,
+        uint256 feeGrowthGlobal1X128,
+        bool upper
+    ) internal returns (bool flipped) {
         Info storage info = self[tick]; // Get current tick info
 
         uint128 liquidityBefore = info.liquidityGross;
@@ -36,6 +83,12 @@ library Tick {
         // liquidityBefore == 0 means this tick never initialized.
         // If it was initialized, we don't need to reassign.
         if (liquidityBefore == 0) {
+            // By convention, Before a new tick will be initialized, we assume that all fee growth were collected below the tick
+            if (tick <= currentTick) {
+                info.feeGrowthOutside0X128 = feeGrowthGlobal0X128;
+                info.feeGrowthOutside1X128 = feeGrowthGlobal1X128;
+            }
+
             info.initialized = true;
         }
 
@@ -54,7 +107,7 @@ library Tick {
         int24 tick,
         uint256 feeGrowthGlobal0X128,
         uint256 feeGrowthGlobal1X128
-    ) internal view returns (int128 liquidityDelta) {
+    ) internal returns (int128 liquidityDelta) {
         Info storage info = self[tick]; // Get current tick info
 
         // Calculate the fee growth outside of this tick
