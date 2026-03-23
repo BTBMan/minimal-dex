@@ -19,35 +19,48 @@ library Tick {
         uint128 liquidityGross;
         // Amount of liquidity added or subtracted when the tick is crossed
         int128 liquidityNet;
+        // Track fee growth on the outside of this tick
+        uint256 feeGrowthOutside0X128;
+        uint256 feeGrowthOutside1X128;
     }
 
     function update(mapping(int24 tick => Info) storage self, int24 tick, int128 liquidityDelta, bool upper)
         internal
         returns (bool flipped)
     {
-        Info storage tickInfo = self[tick]; // Get current tick info
+        Info storage info = self[tick]; // Get current tick info
 
-        uint128 liquidityBefore = tickInfo.liquidityGross;
+        uint128 liquidityBefore = info.liquidityGross;
         uint128 liquidityAfter = LiquidityMath.addDelta(liquidityBefore, liquidityDelta);
 
         // liquidityBefore == 0 means this tick never initialized.
         // If it was initialized, we don't need to reassign.
         if (liquidityBefore == 0) {
-            tickInfo.initialized = true;
+            info.initialized = true;
         }
 
         flipped = (liquidityBefore == 0) != (liquidityAfter == 0); // flipped if add liquidity to an empty tick or remove all liquidity from a non-empty tick
-        tickInfo.liquidityGross = liquidityAfter; // Update current tick liquidity
+        info.liquidityGross = liquidityAfter; // Update current tick liquidity
 
         // If cross into tickLower from other tick range, means increase the liquidity
         // Otherwise, cross into tickUpper from other tick range, means decrease the liquidity
-        tickInfo.liquidityNet = upper
-            ? int128(int256(tickInfo.liquidityNet) - liquidityDelta)
-            : int128(int256(tickInfo.liquidityNet) + liquidityDelta);
+        info.liquidityNet = upper
+            ? int128(int256(info.liquidityNet) - liquidityDelta)
+            : int128(int256(info.liquidityNet) + liquidityDelta);
     }
 
-    function cross(mapping(int24 tick => Info) storage self, int24 tick) internal view returns (int128 liquidityDelta) {
-        Info storage tickInfo = self[tick]; // Get current tick info
-        liquidityDelta = tickInfo.liquidityNet;
+    function cross(
+        mapping(int24 tick => Info) storage self,
+        int24 tick,
+        uint256 feeGrowthGlobal0X128,
+        uint256 feeGrowthGlobal1X128
+    ) internal view returns (int128 liquidityDelta) {
+        Info storage info = self[tick]; // Get current tick info
+
+        // Calculate the fee growth outside of this tick
+        info.feeGrowthOutside0X128 = feeGrowthGlobal0X128 - info.feeGrowthOutside0X128;
+        info.feeGrowthOutside1X128 = feeGrowthGlobal1X128 - info.feeGrowthOutside1X128;
+
+        liquidityDelta = info.liquidityNet;
     }
 }

@@ -16,6 +16,7 @@ import {IFlashCallback} from "../interfaces/callback/IFlashCallback.sol";
 import {IPoolDeployer} from "../interfaces/IPoolDeployer.sol";
 
 /* Libraries *****/
+import "@prb/math/common.sol";
 import {Tick} from "../libraries/Tick.sol";
 import {Position} from "../libraries/Position.sol";
 import {TickBitmap} from "../libraries/TickBitmap.sol";
@@ -23,6 +24,7 @@ import {SqrtPriceMath} from "./../libraries/SqrtPriceMath.sol";
 import {TickMath} from "./../libraries/TickMath.sol";
 import {SwapMath} from "./../libraries/SwapMath.sol";
 import {LiquidityMath} from "./../libraries/LiquidityMath.sol";
+import {FixedPoint128} from "./../libraries/FixedPoint128.sol";
 
 /**
  * @title Pool
@@ -57,6 +59,10 @@ contract Pool is IPool {
 
     // Fee
     uint24 internal immutable fee;
+
+    // Global fee amount
+    uint256 public feeGrowthGlobal0X128; // token 0
+    uint256 public feeGrowthGlobal1X128; // token 1
 
     // Current price and its corresponding tick
     Slot0 public slot0;
@@ -215,6 +221,8 @@ contract Pool is IPool {
         int24 tick;
         // Current liquidity of the tick range
         uint128 liquidity;
+        // Track the global fee amount(token0 or token1), x fee/L
+        uint256 feeGrowthGlobalX128;
     }
 
     struct StepComputations {
@@ -228,6 +236,8 @@ contract Pool is IPool {
         uint256 amountIn;
         // Swap out amount
         uint256 amountOut;
+        // Fee amount of one step
+        uint256 feeAmount;
     }
 
     /**
@@ -246,7 +256,7 @@ contract Pool is IPool {
         bytes calldata data
     ) external returns (int256 amount0, int256 amount1) {
         Slot0 memory slot0Start = slot0;
-        uint128 liquidity_ = liquidity;
+        uint128 _liquidity = liquidity;
 
         // Slippage protection step 1: Ensure the sqrtPriceLimitX96 must be set correctly
         // zeroForOne: ⤵️ TickMath.MIN_SQRT_RATIO < sqrtPriceLimitX96 < sqrtPrice ✅
@@ -263,7 +273,8 @@ contract Pool is IPool {
             amountCalculated: 0,
             sqrtPriceX96: slot0Start.sqrtPriceX96,
             tick: slot0Start.tick,
-            liquidity: liquidity_
+            liquidity: _liquidity,
+            feeGrowthGlobalX128: zeroForOne ? feeGrowthGlobal0X128 : feeGrowthGlobal1X128
         });
 
         // The order is filled when amountSpecifiedRemaining is 0
@@ -283,20 +294,27 @@ contract Pool is IPool {
             // Get the target sqrt price for the specified token trade amount(and re-assigned to state.sqrtPriceX96)
             // Get the actual token trade amount(and assigned to step.amountIn)
             // Get the actual token received amount(and assigned to step.amountOut)
-            //
-            // Slippage protection step 2: Ensure the next sqrt price within the sqrt price limit
-            (state.sqrtPriceX96, step.amountIn, step.amountOut) = SwapMath.computeSwapStep(
+            (state.sqrtPriceX96, step.amountIn, step.amountOut, step.feeAmount) = SwapMath.computeSwapStep(
                 state.sqrtPriceX96,
+                // Slippage protection step 2: Ensure the next sqrt price within the sqrt price limit
                 (zeroForOne ? step.sqrtPriceNextX96 < sqrtPriceLimitX96 : step.sqrtPriceNextX96 > sqrtPriceLimitX96)
                     ? sqrtPriceLimitX96
                     : step.sqrtPriceNextX96,
                 state.liquidity,
-                state.amountSpecifiedRemaining
+                state.amountSpecifiedRemaining,
+                fee
             );
+
+            // Update the fee tracker
+            state.feeGrowthGlobalX128 += mulDiv(step.feeAmount, FixedPoint128.Q128, state.liquidity);
 
             // Reach the tick boundary
             if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
-                int128 liquidityDelta = ticks.cross(step.nextTick);
+                int128 liquidityDelta = ticks.cross(
+                    step.nextTick,
+                    zeroForOne ? state.feeGrowthGlobalX128 : feeGrowthGlobal0X128,
+                    zeroForOne ? feeGrowthGlobal1X128 : state.feeGrowthGlobalX128
+                );
 
                 // Determine if token 0 for token 1
                 if (zeroForOne) liquidityDelta = -liquidityDelta;
@@ -324,8 +342,14 @@ contract Pool is IPool {
 
         // Update liquidity
         // Means it moved to the next tick range
-        if (liquidity_ != state.liquidity) {
+        if (_liquidity != state.liquidity) {
             liquidity = state.liquidity;
+        }
+
+        if (zeroForOne) {
+            feeGrowthGlobal0X128 = state.feeGrowthGlobalX128;
+        } else {
+            feeGrowthGlobal1X128 = state.feeGrowthGlobalX128;
         }
 
         // Update token amounts
