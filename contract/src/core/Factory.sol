@@ -26,8 +26,8 @@ contract Factory is IFactory, PoolDeployer {
     ////////////////////////////////////
     // State variables                //
     ////////////////////////////////////
-    mapping(int24 tickSpacing => bool) public tickSpacings;
-    mapping(address token0 => mapping(address token1 => mapping(int24 tickSpacing => address pool))) public pools;
+    mapping(uint24 fee => int24 tickSpacing) public feeAmountTickSpacing; // 1000 fee = 0.1%, 100 fee = 0.01%, 10 fee = 0.001%, 1 fee = 0.0001%
+    mapping(address token0 => mapping(address token1 => mapping(uint24 fee => address pool))) public pools;
 
     ////////////////////////////////////
     // Events                         //
@@ -42,10 +42,10 @@ contract Factory is IFactory, PoolDeployer {
     ////////////////////////////////////
 
     constructor() {
-        // Set the initialization of tick spacing
-        tickSpacings[1] = true;
-        tickSpacings[10] = true;
-        tickSpacings[60] = true;
+        // Set the initialization of fee
+        feeAmountTickSpacing[1] = 1;
+        feeAmountTickSpacing[500] = 10;
+        feeAmountTickSpacing[3000] = 60;
     }
 
     ////////////////////////////////////
@@ -63,7 +63,7 @@ contract Factory is IFactory, PoolDeployer {
     ////////////////////////////////////
     // Public functions               //
     ////////////////////////////////////
-    function getPool(address tokenA, address tokenB, int24 tickSpacing) public view override returns (address pool) {
+    function getPool(address tokenA, address tokenB, uint24 fee) public view override returns (address pool) {
         if (tokenA == tokenB) {
             revert TokensMustBeDifferent();
         }
@@ -72,16 +72,17 @@ contract Factory is IFactory, PoolDeployer {
             revert TokenCannotBeZero();
         }
 
-        pool = pools[tokenA][tokenB][tickSpacing];
+        pool = pools[tokenA][tokenB][fee];
     }
 
-    function createPool(address tokenA, address tokenB, int24 tickSpacing) public returns (address pool) {
+    function createPool(address tokenA, address tokenB, uint24 fee) public returns (address pool) {
         if (tokenA == tokenB) {
             revert TokensMustBeDifferent();
         }
 
-        if (!tickSpacings[tickSpacing]) {
-            revert UnsupportedTickSpacing();
+        int24 tickSpacing = feeAmountTickSpacing[fee];
+        if (tickSpacing == 0) {
+            revert UnsupportedFee();
         }
 
         // Ensure the tokens' order
@@ -94,16 +95,16 @@ contract Factory is IFactory, PoolDeployer {
         }
 
         // Ensure the pool cannot be created
-        if (pools[token0][token1][tickSpacing] != address(0)) {
+        if (pools[token0][token1][fee] != address(0)) {
             revert PoolAlreadyExists();
         }
 
-        pool = deploy(address(this), token0, token1, tickSpacing);
+        pool = deploy(address(this), token0, token1, fee, tickSpacing);
 
-        pools[token0][token1][tickSpacing] = pool;
-        pools[token1][token0][tickSpacing] = pool;
+        pools[token0][token1][fee] = pool;
+        pools[token1][token0][fee] = pool;
 
-        emit PoolCreated(token0, token1, tickSpacing, pool);
+        emit PoolCreated(token0, token1, fee, tickSpacing, pool);
     }
 
     // Public view  ////////////////////

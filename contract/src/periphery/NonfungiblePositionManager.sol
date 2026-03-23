@@ -92,14 +92,14 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
         }
     }
 
-    function createAndInitializePoolIfNecessary(address tokenA, address tokenB, int24 tickSpacing, uint160 sqrtPriceX96)
+    function createAndInitializePoolIfNecessary(address tokenA, address tokenB, uint24 fee, uint160 sqrtPriceX96)
         public
         returns (address pool)
     {
-        pool = IFactory(factory).getPool(tokenA, tokenB, tickSpacing);
+        pool = IFactory(factory).getPool(tokenA, tokenB, fee);
 
         if (pool == address(0)) {
-            pool = IFactory(factory).createPool(tokenA, tokenB, tickSpacing);
+            pool = IFactory(factory).createPool(tokenA, tokenB, fee);
             IPool(pool).initialize(sqrtPriceX96);
         } else {
             (uint160 sqrtPriceX96Existing,) = IPool(pool).slot0();

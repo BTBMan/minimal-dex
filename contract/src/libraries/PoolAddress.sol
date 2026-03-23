@@ -16,20 +16,16 @@ library PoolAddress {
     struct PoolKey {
         address token0;
         address token1;
-        int24 tickSpacing;
+        uint24 fee;
     }
 
     /**
      * @notice Returns PoolKey, with the ordered tokens
      */
-    function getPoolKey(address tokenA, address tokenB, int24 tickSpacing)
-        internal
-        pure
-        returns (PoolKey memory poolKey)
-    {
+    function getPoolKey(address tokenA, address tokenB, uint24 fee) internal pure returns (PoolKey memory poolKey) {
         if (tokenA > tokenB) (tokenA, tokenB) = (tokenB, tokenA);
 
-        poolKey = PoolKey({token0: tokenA, token1: tokenB, tickSpacing: tickSpacing});
+        poolKey = PoolKey({token0: tokenA, token1: tokenB, fee: fee});
     }
 
     /**
@@ -49,7 +45,7 @@ library PoolAddress {
                         abi.encodePacked(
                             hex"ff",
                             factory,
-                            keccak256(abi.encode(key.token0, key.token1, key.tickSpacing)),
+                            keccak256(abi.encode(key.token0, key.token1, key.fee)),
                             keccak256(type(Pool).creationCode)
                         )
                     )

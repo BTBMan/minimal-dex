@@ -92,11 +92,7 @@ contract SwapRouterTest is Test, TestUtils {
 
         uint256 amountOut = swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
-                tokenIn: address(usdc),
-                tokenOut: address(weth),
-                tickSpacing: 1,
-                amountIn: swapAmount,
-                sqrtPriceLimitX96: 0
+                tokenIn: address(usdc), tokenOut: address(weth), fee: 1, amountIn: swapAmount, sqrtPriceLimitX96: 0
             })
         );
 

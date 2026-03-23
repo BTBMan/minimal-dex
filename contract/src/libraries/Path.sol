@@ -36,9 +36,9 @@ library Path {
     // The size of a address in bytes
     uint256 private constant ADDR_SIZE = 20;
     // The size of a tickSpacing in bytes
-    uint256 private constant TICKSPACING_SIZE = 3;
+    uint256 private constant FEE_SIZE = 3;
     // The size of a offset of the next token address in bytes
-    uint256 private constant NEXT_OFFSET = ADDR_SIZE + TICKSPACING_SIZE;
+    uint256 private constant NEXT_OFFSET = ADDR_SIZE + FEE_SIZE;
     // The size of a offset of the encode pool key in bytes
     uint256 private constant POP_OFFSET = NEXT_OFFSET + ADDR_SIZE;
     // The minimum length of a path that contains two or more pools
@@ -79,13 +79,9 @@ library Path {
     /**
      * @notice Decode the first pool from path
      */
-    function decodeFirstPool(bytes memory path)
-        internal
-        pure
-        returns (address tokenA, address tokenB, int24 tickSpacing)
-    {
+    function decodeFirstPool(bytes memory path) internal pure returns (address tokenA, address tokenB, uint24 fee) {
         tokenA = path.toAddress(0);
-        tickSpacing = path.toInt24(ADDR_SIZE);
+        fee = path.toUint24(ADDR_SIZE);
         tokenB = path.toAddress(NEXT_OFFSET);
     }
 }

@@ -55,6 +55,9 @@ contract Pool is IPool {
     // Tick spacing
     int24 internal immutable tickSpacing;
 
+    // Fee
+    uint24 internal immutable fee;
+
     // Current price and its corresponding tick
     Slot0 public slot0;
 
@@ -83,7 +86,7 @@ contract Pool is IPool {
 
     constructor() {
         // Get parameters from deployer
-        (factory, token0, token1, tickSpacing) = IPoolDeployer(msg.sender).parameters();
+        (factory, token0, token1, fee, tickSpacing) = IPoolDeployer(msg.sender).parameters();
     }
 
     ////////////////////////////////////

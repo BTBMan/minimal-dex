@@ -85,8 +85,8 @@ contract SwapRouter is ISwapRouter, ISwapCallback {
     /**
      * @notice Get pool address by given tokenA, tokenB and tickSpacing
      */
-    function getPool(address tokenA, address tokenB, int24 tickSpacing) private view returns (IPool pool) {
-        pool = IPool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, tickSpacing)));
+    function getPool(address tokenA, address tokenB, uint24 fee) private view returns (IPool pool) {
+        pool = IPool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
     }
 
     /**
@@ -99,13 +99,13 @@ contract SwapRouter is ISwapRouter, ISwapCallback {
         SwapCallbackData memory data
     ) private returns (uint256 amountOut) {
         // Extract the first pool parameters
-        (address tokenIn, address tokenOut, int24 tickSpacing) = data.path.decodeFirstPool();
+        (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
 
         // Determine the swap direction
         bool zeroForOne = tokenIn < tokenOut;
 
         // Execute the swap function
-        (int256 amount0, int256 amount1) = getPool(tokenIn, tokenOut, tickSpacing)
+        (int256 amount0, int256 amount1) = getPool(tokenIn, tokenOut, fee)
             .swap(
                 recipient,
                 zeroForOne,
@@ -128,9 +128,7 @@ contract SwapRouter is ISwapRouter, ISwapCallback {
             params.amountIn,
             msg.sender,
             params.sqrtPriceLimitX96,
-            SwapCallbackData({
-                path: abi.encodePacked(params.tokenIn, params.tickSpacing, params.tokenOut), payer: msg.sender
-            })
+            SwapCallbackData({path: abi.encodePacked(params.tokenIn, params.fee, params.tokenOut), payer: msg.sender})
         );
     }
 

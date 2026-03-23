@@ -61,10 +61,10 @@ contract Quoter is IQuoter, ISwapCallback {
     // External functions             //
     ////////////////////////////////////
     function swapCallback(int256 amount0Delta, int256 amount1Delta, bytes memory path) external view {
-        (address tokenIn, address tokenOut, int24 tickSpacing) = path.decodeFirstPool();
+        (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
 
         // Verify the pool which is calling this function is the same as the one in the data
-        CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, tickSpacing);
+        CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, fee);
 
         bool zeroForOne = tokenIn < tokenOut;
 
@@ -80,8 +80,8 @@ contract Quoter is IQuoter, ISwapCallback {
     /**
      * @notice Get pool address by given tokenA, tokenB and tickSpacing
      */
-    function getPool(address tokenA, address tokenB, int24 tickSpacing) private view returns (IPool pool) {
-        pool = IPool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, tickSpacing)));
+    function getPool(address tokenA, address tokenB, uint24 fee) private view returns (IPool pool) {
+        pool = IPool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
     }
 
     function parseReason(bytes memory reason) private pure returns (uint256 amountDelta) {
@@ -94,13 +94,13 @@ contract Quoter is IQuoter, ISwapCallback {
     function quoteExactInputSingle(
         address tokenIn,
         address tokenOut,
-        int24 tickSpacing,
+        uint24 fee,
         uint256 amountIn,
         uint160 sqrtPriceLimitX96
     ) public returns (uint256 amountOut) {
         bool zeroForOne = tokenIn < tokenOut;
 
-        try getPool(tokenIn, tokenOut, tickSpacing)
+        try getPool(tokenIn, tokenOut, fee)
             .swap(
                 // address(this) just for calculation
                 // address(0) has some problem
@@ -110,7 +110,7 @@ contract Quoter is IQuoter, ISwapCallback {
                 sqrtPriceLimitX96 == 0
                     ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
                     : sqrtPriceLimitX96,
-                (abi.encodePacked(tokenIn, tickSpacing, tokenOut))
+                (abi.encodePacked(tokenIn, fee, tokenOut))
             ) {}
         catch (bytes memory reason) {
             return parseReason(reason);
@@ -124,9 +124,9 @@ contract Quoter is IQuoter, ISwapCallback {
         while (true) {
             bool hasMultiplePools = path.hasMultiplePools();
 
-            (address tokenIn, address tokenOut, int24 tickSpacing) = path.decodeFirstPool();
+            (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
 
-            amountIn = quoteExactInputSingle(tokenIn, tokenOut, tickSpacing, amountIn, 0);
+            amountIn = quoteExactInputSingle(tokenIn, tokenOut, fee, amountIn, 0);
 
             if (hasMultiplePools) {
                 path = path.skipToken();
@@ -143,7 +143,7 @@ contract Quoter is IQuoter, ISwapCallback {
     function quoteExactOutputSingle(
         address tokenIn,
         address tokenOut,
-        int24 tickSpacing,
+        uint24 fee,
         uint256 amountOut,
         uint160 sqrtPriceLimitX96
     ) external returns (uint256 amountIn) {

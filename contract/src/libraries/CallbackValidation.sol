@@ -7,12 +7,12 @@ import {PoolAddress} from "./PoolAddress.sol";
 library CallbackValidation {
     error InvalidPool(address pool, address sender);
 
-    function verifyCallback(address factory, address tokenIn, address tokenOut, int24 tickSpacing)
+    function verifyCallback(address factory, address tokenIn, address tokenOut, uint24 fee)
         internal
         view
         returns (IPool pool)
     {
-        pool = IPool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenIn, tokenOut, tickSpacing)));
+        pool = IPool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenIn, tokenOut, fee)));
 
         if (address(pool) != msg.sender) {
             revert InvalidPool(address(pool), msg.sender);

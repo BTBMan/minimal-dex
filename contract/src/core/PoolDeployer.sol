@@ -65,12 +65,12 @@ contract PoolDeployer is IPoolDeployer {
     ////////////////////////////////////
     // Internal functions             //
     ////////////////////////////////////
-    function deploy(address factory, address token0, address token1, int24 tickSpacing)
+    function deploy(address factory, address token0, address token1, uint24 fee, int24 tickSpacing)
         internal
         returns (address pool)
     {
-        parameters = Parameters({factory: factory, token0: token0, token1: token1, tickSpacing: tickSpacing});
-        pool = address(new Pool{salt: keccak256(abi.encode(token0, token1, tickSpacing))}());
+        parameters = Parameters({factory: factory, token0: token0, token1: token1, fee: fee, tickSpacing: tickSpacing});
+        pool = address(new Pool{salt: keccak256(abi.encode(token0, token1, fee))}());
         delete parameters;
     }
 

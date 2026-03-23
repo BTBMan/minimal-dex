@@ -11,7 +11,7 @@ interface ISwapRouter {
     struct ExactInputSingleParams {
         address tokenIn;
         address tokenOut;
-        int24 tickSpacing;
+        uint24 fee;
         uint256 amountIn;
         uint160 sqrtPriceLimitX96;
     }
@@ -28,7 +28,7 @@ interface ISwapRouter {
     struct ExactOutputSingleParams {
         address tokenIn;
         address tokenOut;
-        int24 tickSpacing;
+        uint24 fee;
         uint256 amountOut;
         uint160 sqrtPriceLimitX96;
     }
