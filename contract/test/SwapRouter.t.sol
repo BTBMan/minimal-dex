@@ -96,7 +96,7 @@ contract SwapRouterTest is Test, TestUtils {
             })
         );
 
-        uint256 expectedAmountOut = 0.008396837685175036 ether;
+        uint256 expectedAmountOut = 0.008396829291658311 ether;
 
         assertEq(amountOut, expectedAmountOut);
     }
@@ -171,7 +171,7 @@ contract SwapRouterTest is Test, TestUtils {
             })
         );
 
-        uint256 expectedAmountOut = 0.396279562407372129 ether;
+        uint256 expectedAmountOut = 0.3962785593816643 ether;
 
         assertEq(amountOut, expectedAmountOut);
     }

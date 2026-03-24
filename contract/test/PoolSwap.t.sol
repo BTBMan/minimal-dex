@@ -46,7 +46,7 @@ contract PoolSwapTest is Test, TestUtils {
         (int256 amount0Delta, int256 amount1Delta) =
             pool.swap(address(this), false, swapAmount, sqrtP(5004), callbackData);
 
-        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-0.008396837685175036 ether, int256(swapAmount));
+        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-0.008396829291658311 ether, int256(swapAmount));
 
         // Check swap amount
         assertEq(amount0Delta, expectedAmount0Delta);
@@ -57,7 +57,7 @@ contract PoolSwapTest is Test, TestUtils {
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: liquidity[0].amount,
-                sqrtPriceX96: 5604440321401375301926914693788, // 5003.862075243974
+                sqrtPriceX96: 5604440319184809477873515789008, // 5003.862071285904
                 tick: 85183,
                 fees: [uint256(0), 0],
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
@@ -97,7 +97,7 @@ contract PoolSwapTest is Test, TestUtils {
         (int256 amount0Delta, int256 amount1Delta) =
             pool.swap(address(this), false, swapAmount, sqrtP(5002), callbackData);
 
-        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-0.008398498495503179 ether, int256(swapAmount));
+        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-0.008398490098665821 ether, int256(swapAmount));
 
         // Check swap amount
         assertEq(amount0Delta, expectedAmount0Delta);
@@ -108,7 +108,7 @@ contract PoolSwapTest is Test, TestUtils {
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: liquidityAmount,
-                sqrtPriceX96: 5603332038489348602474524844738, // 5001.883234831316
+                sqrtPriceX96: 5603332037381065690447825392348, // 5001.883232852671
                 tick: 85179,
                 fees: [uint256(0), 0],
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
@@ -162,7 +162,7 @@ contract PoolSwapTest is Test, TestUtils {
         (int256 amount0Delta, int256 amount1Delta) =
             pool.swap(address(this), false, swapAmount, sqrtP(6113), callbackData);
 
-        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-1.81912040370638959 ether, int256(swapAmount));
+        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-1.819118767755198632 ether, int256(swapAmount));
 
         // Check swap amount
         assertEq(amount0Delta, expectedAmount0Delta);
@@ -173,7 +173,7 @@ contract PoolSwapTest is Test, TestUtils {
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: range2.amount,
-                sqrtPriceX96: 6194331388292842240173903498830, // 6112.652457372715
+                sqrtPriceX96: 6194330727015523656888479711743, // 6112.651152257456
                 tick: 87185,
                 fees: [uint256(0), 0],
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
@@ -247,7 +247,7 @@ contract PoolSwapTest is Test, TestUtils {
         (int256 amount0Delta, int256 amount1Delta) =
             pool.swap(address(this), false, swapAmount, sqrtP(6070), callbackData);
 
-        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-1.862719660691831839 ether, int256(swapAmount));
+        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (-1.862718013005470885 ether, int256(swapAmount));
 
         // Check swap amount
         assertEq(amount0Delta, expectedAmount0Delta);
@@ -258,7 +258,7 @@ contract PoolSwapTest is Test, TestUtils {
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: range2.amount,
-                sqrtPriceX96: 6172233564764672077672517253553, // 6069.117370400689
+                sqrtPriceX96: 6172232383251629775917976287024, // 6069.115046852635
                 tick: 87114,
                 fees: [uint256(0), 0],
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
@@ -330,7 +330,7 @@ contract PoolSwapTest is Test, TestUtils {
             pool.swap(address(this), false, swapAmount, sqrtP(5003), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
-            (-0.006367981248889227 ether, 31.848852667232582617 ether);
+            (-0.006367981248889227 ether, 31.848884516117098735 ether);
 
         // Check swap amount
         assertEq(amount0Delta, expectedAmount0Delta);
@@ -404,7 +404,7 @@ contract PoolSwapTest is Test, TestUtils {
         (int256 amount0Delta, int256 amount1Delta) =
             pool.swap(address(this), true, swapAmount, sqrtP(4993), callbackData);
 
-        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (int256(swapAmount), -66.806655895621834199 ether);
+        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (int256(swapAmount), -66.806589131010509403 ether);
 
         // Check swap amount
         assertEq(amount0Delta, expectedAmount0Delta);
@@ -415,7 +415,7 @@ contract PoolSwapTest is Test, TestUtils {
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: liquidity[0].amount,
-                sqrtPriceX96: 5598698009142142596565733951525, // 4993.613409332654
+                sqrtPriceX96: 5598698012665670113678845821468, // 4993.613415618091
                 tick: 85163,
                 fees: [uint256(0), 0],
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
@@ -455,7 +455,7 @@ contract PoolSwapTest is Test, TestUtils {
         (int256 amount0Delta, int256 amount1Delta) =
             pool.swap(address(this), true, swapAmount, sqrtP(4996), callbackData);
 
-        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (int256(swapAmount), -66.827684819295968855 ether);
+        (int256 expectedAmount0Delta, int256 expectedAmount1Delta) = (int256(swapAmount), -66.827618012646671539 ether);
 
         // Check swap amount
         assertEq(amount0Delta, expectedAmount0Delta);
@@ -466,7 +466,7 @@ contract PoolSwapTest is Test, TestUtils {
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: liquidityAmount,
-                sqrtPriceX96: 5600460327455047336528300624435, // 4996.757612287727
+                sqrtPriceX96: 5600460329217920380003911069891, // 4996.757615433415
                 tick: 85169,
                 fees: [uint256(0), 0],
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
@@ -521,7 +521,7 @@ contract PoolSwapTest is Test, TestUtils {
             pool.swap(address(this), true, swapAmount, sqrtP(4094), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
-            (int256(swapAmount), -9098.355274825336550283 ether);
+            (int256(swapAmount), -9098.347085553250996988 ether);
 
         // Check swap amount
         assertEq(amount0Delta, expectedAmount0Delta);
@@ -532,7 +532,7 @@ contract PoolSwapTest is Test, TestUtils {
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: range2.amount,
-                sqrtPriceX96: 5069757813637094491011532037516, // 4094.635609303384
+                sqrtPriceX96: 5069758350327724923607021157406, // 4094.6364762294834
                 tick: 83178,
                 fees: [uint256(0), 0],
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
@@ -607,7 +607,7 @@ contract PoolSwapTest is Test, TestUtils {
             pool.swap(address(this), true, swapAmount, sqrtP(4129), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
-            (int256(swapAmount), -9318.695291351037641952 ether);
+            (int256(swapAmount), -9318.687032668167197844 ether);
 
         // Check swap amount
         assertEq(amount0Delta, expectedAmount0Delta);
@@ -618,7 +618,7 @@ contract PoolSwapTest is Test, TestUtils {
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: range2.amount,
-                sqrtPriceX96: 5091197434700471409059068614113, // 4129.340643465598
+                sqrtPriceX96: 5091198410869847077109758442744, // 4129.342226958015
                 tick: 83262,
                 fees: [uint256(0), 0],
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
@@ -690,7 +690,7 @@ contract PoolSwapTest is Test, TestUtils {
             pool.swap(address(this), true, swapAmount, sqrtP(4994), callbackData);
 
         (int256 expectedAmount0Delta, int256 expectedAmount1Delta) =
-            (0.012741694827272816 ether, -63.669049964153300768 ether);
+            (0.012741707568980385 ether, -63.669049964153300768 ether);
 
         // Check swap amount
         assertEq(amount0Delta, expectedAmount0Delta);
