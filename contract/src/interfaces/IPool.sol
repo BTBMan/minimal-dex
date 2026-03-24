@@ -41,8 +41,23 @@ interface IPool {
     );
 
     event Flash(address indexed recipient, uint256 amount0, uint256 amount1);
-
     event Initialize(uint160 sqrtPriceX96, int24 tick);
+    event Burn(
+        address indexed owner,
+        int24 indexed tickLower,
+        int24 indexed tickUpper,
+        uint128 amount,
+        uint256 amount0,
+        uint256 amount1
+    );
+    event Collect(
+        address indexed owner,
+        address indexed recipient,
+        int24 indexed tickLower,
+        int24 indexed tickUpper,
+        uint256 amount0,
+        uint256 amount1
+    );
 
     ////////////////////////////////////
     // Errors                         //
@@ -89,6 +104,14 @@ interface IPool {
     function mint(address owner, int24 tickLower, int24 tickUpper, uint128 amount, bytes calldata data)
         external
         returns (uint256 amount0, uint256 amount1);
+    function collect(
+        address owner,
+        int24 tickLower,
+        int24 tickUpper,
+        uint256 amount0Requested,
+        uint256 amount1Requested
+    ) external returns (uint256 amount0, uint256 amount1);
+    function burn(int24 tickLower, int24 tickUpper, uint128 amount) external returns (uint256 amount0, uint256 amount1);
     function swap(
         address recipient,
         bool zeroForOne,

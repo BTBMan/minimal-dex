@@ -274,8 +274,32 @@ contract Pool is IPool {
         emit Mint(msg.sender, owner, tickLower, tickUpper, amount, amount0, amount1);
     }
 
-    function collect() external {
-        //
+    /**
+     * @notice Collect token owed to the position
+     */
+    function collect(
+        address recipient,
+        int24 tickLower,
+        int24 tickUpper,
+        uint256 amount0Requested,
+        uint256 amount1Requested
+    ) external returns (uint256 amount0, uint256 amount1) {
+        Position.Info storage position = positions.get(recipient, tickLower, tickUpper);
+
+        amount0 = amount0Requested > position.tokensOwed0 ? position.tokensOwed0 : amount0Requested;
+        amount1 = amount1Requested > position.tokensOwed1 ? position.tokensOwed1 : amount1Requested;
+
+        if (amount0 > 0) {
+            position.tokensOwed0 -= amount0;
+            IERC20(token0).transfer(recipient, amount0);
+        }
+
+        if (amount1 > 0) {
+            position.tokensOwed1 -= amount1;
+            IERC20(token1).transfer(recipient, amount1);
+        }
+
+        emit Collect(msg.sender, recipient, tickLower, tickUpper, amount0, amount1);
     }
 
     /**
@@ -284,8 +308,33 @@ contract Pool is IPool {
      * @param tickUpper The upper tick of the position
      * @param amount The amount of liquidity to remove
      */
-    function burn(int24 tickLower, int24 tickUpper, uint128 amount) external {
-        //
+    function burn(int24 tickLower, int24 tickUpper, uint128 amount)
+        external
+        returns (uint256 amount0, uint256 amount1)
+    {
+        // Usually, amount0Int and amount1Int are negative number
+        (Position.Info storage position, int256 amount0Int, int256 amount1Int) = _modifyPosition(
+            ModifyPositionParams({
+                owner: msg.sender,
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                // Add negative liquidity to remove liquidity
+                liquidityDelta: -(int128(amount))
+            })
+        );
+
+        // Transform to the positive number
+        amount0 = uint256(-amount0Int);
+        amount1 = uint256(-amount1Int);
+
+        // Update position owed tokens
+        // Notice that owed tokens include fees transformed tokens and burned tokens
+        if (amount0 > 0 || amount1 > 0) {
+            (position.tokensOwed0, position.tokensOwed1) =
+            (position.tokensOwed0 + amount0, position.tokensOwed1 + amount1);
+        }
+
+        emit Burn(msg.sender, tickLower, tickUpper, amount, amount0, amount1);
     }
 
     struct SwapState {
@@ -384,7 +433,9 @@ contract Pool is IPool {
             );
 
             // Update the fee tracker
-            state.feeGrowthGlobalX128 += mulDiv(step.feeAmount, FixedPoint128.Q128, state.liquidity);
+            if (state.liquidity > 0) {
+                state.feeGrowthGlobalX128 += mulDiv(step.feeAmount, FixedPoint128.Q128, state.liquidity);
+            }
 
             // Reach the tick boundary
             if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
