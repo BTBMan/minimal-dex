@@ -178,14 +178,14 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
         }
     }
 
-    function flashCallback(bytes calldata data) external virtual override {
+    function flashCallback(uint256 fee0, uint256 fee1, bytes calldata data) external virtual override {
         (uint256 amount0, uint256 amount1) = abi.decode(data, (uint256, uint256));
 
         if (amount0 > 0) {
-            weth.transfer(msg.sender, amount0);
+            weth.transfer(msg.sender, amount0 + fee0);
         }
         if (amount1 > 0) {
-            usdc.transfer(msg.sender, amount1);
+            usdc.transfer(msg.sender, amount1 + fee1);
         }
 
         flashCallbackCalled = true;

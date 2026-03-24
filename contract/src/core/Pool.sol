@@ -23,6 +23,7 @@ import {TickBitmap} from "../libraries/TickBitmap.sol";
 import {SqrtPriceMath} from "./../libraries/SqrtPriceMath.sol";
 import {TickMath} from "./../libraries/TickMath.sol";
 import {SwapMath} from "./../libraries/SwapMath.sol";
+import {FullMath} from "./../libraries/FullMath.sol";
 import {LiquidityMath} from "./../libraries/LiquidityMath.sol";
 import {FixedPoint128} from "./../libraries/FixedPoint128.sol";
 
@@ -516,6 +517,10 @@ contract Pool is IPool {
     }
 
     function flash(uint256 amount0, uint256 amount1, bytes calldata data) external {
+        // Calculate amount fee
+        uint256 fee0 = FullMath.mulDivRoundingUp(amount0, fee, 1e6);
+        uint256 fee1 = FullMath.mulDivRoundingUp(amount1, fee, 1e6);
+
         // Balance of the pool before lend tokens
         uint256 balance0Before = balance0();
         uint256 balance1Before = balance1();
@@ -529,9 +534,10 @@ contract Pool is IPool {
         }
 
         // Call the callback function
-        IFlashCallback(msg.sender).flashCallback(data);
+        IFlashCallback(msg.sender).flashCallback(fee0, fee1, data);
 
-        if (balance0Before < balance0() || balance1Before < balance1()) {
+        // Validate balance, the repayment amount must include the fee
+        if (balance0() < balance0Before + fee0 || balance1() < balance1Before + fee1) {
             revert FlashLoanNotPaid();
         }
 

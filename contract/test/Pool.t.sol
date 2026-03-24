@@ -58,8 +58,8 @@ contract PoolTest is Test, TestUtils {
         LiquidityRange[] memory liquidity = new LiquidityRange[](1);
         liquidity[0] = liquidityRange(4540, 5500, 1 ether, 5000 ether, 5000);
         PoolParams memory poolParams = PoolParams({
-            wethBalance: 1 ether,
-            usdcBalance: 5000 ether,
+            wethBalance: 2 ether,
+            usdcBalance: 6500 ether,
             currentPrice: 5000,
             liquidity: liquidity,
             shouldTransferInCallback: true,
