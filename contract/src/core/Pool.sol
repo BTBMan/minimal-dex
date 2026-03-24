@@ -147,45 +147,29 @@ contract Pool is IPool {
         // Determine if the current price is within the tick range to calculate amount0 and amount1
         if (_slot0.tick < params.tickLower) {
             // Out of range, amount1(token y) is 0, need to calculate amount0(token x)
-            amount0 = int256(
-                SqrtPriceMath.getAmount0Delta(
-                    TickMath.getSqrtRatioAtTick(params.tickLower),
-                    TickMath.getSqrtRatioAtTick(params.tickUpper),
-                    uint128(params.liquidityDelta),
-                    true
-                )
+            amount0 = SqrtPriceMath.getAmount0Delta(
+                TickMath.getSqrtRatioAtTick(params.tickLower),
+                TickMath.getSqrtRatioAtTick(params.tickUpper),
+                params.liquidityDelta
             );
         } else if (_slot0.tick < params.tickUpper) {
             // In range, need to calculate both amount0(token x) and amount1(token y)
-            amount0 = int256(
-                SqrtPriceMath.getAmount0Delta(
-                    _slot0.sqrtPriceX96,
-                    TickMath.getSqrtRatioAtTick(params.tickUpper),
-                    uint128(params.liquidityDelta),
-                    true
-                )
+            amount0 = SqrtPriceMath.getAmount0Delta(
+                _slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(params.tickUpper), params.liquidityDelta
             );
 
-            amount1 = int256(
-                SqrtPriceMath.getAmount1Delta(
-                    _slot0.sqrtPriceX96,
-                    TickMath.getSqrtRatioAtTick(params.tickLower),
-                    uint128(params.liquidityDelta),
-                    true
-                )
+            amount1 = SqrtPriceMath.getAmount1Delta(
+                _slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(params.tickLower), params.liquidityDelta
             );
 
             // Update liquidity
             liquidity = LiquidityMath.addDelta(liquidity, params.liquidityDelta);
         } else {
             // Out of range, amount0(token x) is 0, need to calculate amount1(token y)
-            amount1 = int256(
-                SqrtPriceMath.getAmount1Delta(
-                    TickMath.getSqrtRatioAtTick(params.tickLower),
-                    TickMath.getSqrtRatioAtTick(params.tickUpper),
-                    uint128(params.liquidityDelta),
-                    true
-                )
+            amount1 = SqrtPriceMath.getAmount1Delta(
+                TickMath.getSqrtRatioAtTick(params.tickLower),
+                TickMath.getSqrtRatioAtTick(params.tickUpper),
+                params.liquidityDelta
             );
         }
     }
@@ -281,9 +265,9 @@ contract Pool is IPool {
         address recipient,
         int24 tickLower,
         int24 tickUpper,
-        uint256 amount0Requested,
-        uint256 amount1Requested
-    ) external returns (uint256 amount0, uint256 amount1) {
+        uint128 amount0Requested,
+        uint128 amount1Requested
+    ) external returns (uint128 amount0, uint128 amount1) {
         Position.Info storage position = positions.get(recipient, tickLower, tickUpper);
 
         amount0 = amount0Requested > position.tokensOwed0 ? position.tokensOwed0 : amount0Requested;
@@ -304,6 +288,7 @@ contract Pool is IPool {
 
     /**
      * @notice Remove the liquidity
+     * @dev Call this function, will update tokens owed twice
      * @param tickLower The lower tick of the position
      * @param tickUpper The upper tick of the position
      * @param amount The amount of liquidity to remove
@@ -331,7 +316,7 @@ contract Pool is IPool {
         // Notice that owed tokens include fees transformed tokens and burned tokens
         if (amount0 > 0 || amount1 > 0) {
             (position.tokensOwed0, position.tokensOwed1) =
-            (position.tokensOwed0 + amount0, position.tokensOwed1 + amount1);
+            (position.tokensOwed0 + uint128(amount0), position.tokensOwed1 + uint128(amount1));
         }
 
         emit Burn(msg.sender, tickLower, tickUpper, amount, amount0, amount1);

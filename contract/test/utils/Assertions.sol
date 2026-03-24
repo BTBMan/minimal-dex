@@ -22,8 +22,8 @@ abstract contract Assertions is Test {
         assertEq(currentTick, expected.tick, "invalid current tick");
         assertEq(expected.pool.liquidity(), expected.liquidity, "invalid current liquidity");
 
-        // assertEq(expected.pool.feeGrowthGlobal0X128(), expected.fees[0], "incorrect feeGrowthGlobal0X128");
-        // assertEq(expected.pool.feeGrowthGlobal1X128(), expected.fees[1], "incorrect feeGrowthGlobal1X128");
+        assertEq(expected.pool.feeGrowthGlobal0X128(), expected.fees[0], "incorrect feeGrowthGlobal0X128");
+        assertEq(expected.pool.feeGrowthGlobal1X128(), expected.fees[1], "incorrect feeGrowthGlobal1X128");
     }
 
     struct ExpectedBalances {
@@ -117,7 +117,7 @@ abstract contract Assertions is Test {
         uint256[2] userBalances;
         uint256[2] poolBalances;
         // Position
-        // ExpectedPositionShort position;
+        ExpectedPositionShort position;
         // Ticks
         ExpectedTickShort[2] ticks;
         // // Observation
@@ -144,16 +144,16 @@ abstract contract Assertions is Test {
                 poolBalance1: expected.poolBalances[1]
             })
         );
-        // assertPosition(
-        //     ExpectedPosition({
-        //         pool: expected.pool,
-        //         owner: expected.position.owner,
-        //         ticks: expected.position.ticks,
-        //         liquidity: expected.position.liquidity,
-        //         feeGrowth: expected.position.feeGrowth,
-        //         tokensOwed: expected.position.tokensOwed
-        //     })
-        // );
+        assertPosition(
+            ExpectedPosition({
+                pool: expected.pool,
+                owner: expected.position.owner,
+                ticks: expected.position.ticks,
+                liquidity: expected.position.liquidity,
+                feeGrowth: expected.position.feeGrowth,
+                tokensOwed: expected.position.tokensOwed
+            })
+        );
 
         assertTick(
             ExpectedTick({
@@ -230,16 +230,16 @@ abstract contract Assertions is Test {
     }
 
     function assertMany(ExpectedPositionAndTicks memory expected) internal view {
-        // assertPosition(
-        //     ExpectedPosition({
-        //         pool: expected.pool,
-        //         owner: expected.position.owner,
-        //         ticks: expected.position.ticks,
-        //         liquidity: expected.position.liquidity,
-        //         feeGrowth: expected.position.feeGrowth,
-        //         tokensOwed: expected.position.tokensOwed
-        //     })
-        // );
+        assertPosition(
+            ExpectedPosition({
+                pool: expected.pool,
+                owner: expected.position.owner,
+                ticks: expected.position.ticks,
+                liquidity: expected.position.liquidity,
+                feeGrowth: expected.position.feeGrowth,
+                tokensOwed: expected.position.tokensOwed
+            })
+        );
 
         assertTick(
             ExpectedTick({
@@ -279,22 +279,22 @@ abstract contract Assertions is Test {
         uint128[2] tokensOwed;
     }
 
-    // function assertPosition(ExpectedPosition memory params) public {
-    //     bytes32 positionKey = keccak256(abi.encodePacked(params.owner, params.ticks[0], params.ticks[1]));
-    //     (
-    //         uint128 liquidity,
-    //         uint256 feeGrowthInside0LastX128,
-    //         uint256 feeGrowthInside1LastX128,
-    //         uint128 tokensOwed0,
-    //         uint128 tokensOwed1
-    //     ) = params.pool.positions(positionKey);
+    function assertPosition(ExpectedPosition memory params) public view {
+        bytes32 positionKey = keccak256(abi.encodePacked(params.owner, params.ticks[0], params.ticks[1]));
+        (
+            uint128 liquidity,
+            uint256 feeGrowthInside0LastX128,
+            uint256 feeGrowthInside1LastX128,
+            uint128 tokensOwed0,
+            uint128 tokensOwed1
+        ) = params.pool.positions(positionKey);
 
-    //     assertEq(liquidity, params.liquidity, "incorrect position liquidity");
-    //     assertEq(feeGrowthInside0LastX128, params.feeGrowth[0], "incorrect position fee growth for token0");
-    //     assertEq(feeGrowthInside1LastX128, params.feeGrowth[1], "incorrect position fee growth for token1");
-    //     assertEq(tokensOwed0, params.tokensOwed[0], "incorrect position tokens owed for token0");
-    //     assertEq(tokensOwed1, params.tokensOwed[1], "incorrect position tokens owed for token1");
-    // }
+        assertEq(liquidity, params.liquidity, "incorrect position liquidity");
+        assertEq(feeGrowthInside0LastX128, params.feeGrowth[0], "incorrect position fee growth for token0");
+        assertEq(feeGrowthInside1LastX128, params.feeGrowth[1], "incorrect position fee growth for token1");
+        assertEq(tokensOwed0, params.tokensOwed[0], "incorrect position tokens owed for token0");
+        assertEq(tokensOwed1, params.tokensOwed[1], "incorrect position tokens owed for token1");
+    }
 
     struct ExpectedNFTs {
         INonfungiblePositionManager nft;

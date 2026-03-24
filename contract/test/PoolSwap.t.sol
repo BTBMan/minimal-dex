@@ -59,7 +59,14 @@ contract PoolSwapTest is Test, TestUtils {
                 liquidity: liquidity[0].amount,
                 sqrtPriceX96: 5604440319184809477873515789008, // 5003.862071285904
                 tick: 85183,
-                fees: [uint256(0), 0],
+                fees: [uint256(0), 9520077723740638453671021421607],
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [liquidity[0].tickLower, liquidity[0].tickUpper],
+                    liquidity: liquidity[0].amount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
@@ -110,7 +117,14 @@ contract PoolSwapTest is Test, TestUtils {
                 liquidity: liquidityAmount,
                 sqrtPriceX96: 5603332037381065690447825392348, // 5001.883232852671
                 tick: 85179,
-                fees: [uint256(0), 0],
+                fees: [uint256(0), 4760038861870319226835510710803],
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [liquidity[0].tickLower, liquidity[0].tickUpper],
+                    liquidity: liquidityAmount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
@@ -169,17 +183,57 @@ contract PoolSwapTest is Test, TestUtils {
         assertEq(amount1Delta, expectedAmount1Delta);
 
         assertMany(
-            ExpectedMany({
+            ExpectedPoolAndBalances({
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: range2.amount,
                 sqrtPriceX96: 6194330727015523656888479711743, // 6112.651152257456
                 tick: 87185,
-                fees: [uint256(0), 0],
+                fees: [uint256(0), 2543082621143305072629880308303040],
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
-                ],
+                ]
+            })
+        );
+
+        assertMany(
+            ExpectedPositionAndTicks({
+                pool: pool,
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [range1.tickLower, range1.tickUpper],
+                    liquidity: range1.amount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
+                ticks: [
+                    ExpectedTickShort({
+                        tick: range1.tickLower,
+                        initialized: true,
+                        liquidityGross: range1.amount,
+                        liquidityNet: int128(range1.amount)
+                    }),
+                    ExpectedTickShort({
+                        tick: range1.tickUpper,
+                        initialized: true,
+                        liquidityGross: range1.amount + range2.amount,
+                        liquidityNet: -int128(range1.amount - range2.amount)
+                    })
+                ]
+            })
+        );
+
+        assertMany(
+            ExpectedPositionAndTicks({
+                pool: pool,
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [range2.tickLower, range2.tickUpper],
+                    liquidity: range2.amount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
                 ticks: [
                     ExpectedTickShort({
                         tick: range2.tickLower,
@@ -194,26 +248,6 @@ contract PoolSwapTest is Test, TestUtils {
                         liquidityNet: -int128(range2.amount)
                     })
                 ]
-            })
-        );
-
-        assertTick(
-            ExpectedTick({
-                pool: pool,
-                tick: range1.tickLower,
-                initialized: true,
-                liquidityGross: range1.amount,
-                liquidityNet: int128(range1.amount)
-            })
-        );
-
-        assertTick(
-            ExpectedTick({
-                pool: pool,
-                tick: range1.tickUpper,
-                initialized: true,
-                liquidityGross: range1.amount + range2.amount,
-                liquidityNet: -int128(range1.amount - range2.amount)
             })
         );
     }
@@ -254,17 +288,57 @@ contract PoolSwapTest is Test, TestUtils {
         assertEq(amount1Delta, expectedAmount1Delta);
 
         assertMany(
-            ExpectedMany({
+            ExpectedPoolAndBalances({
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: range2.amount,
                 sqrtPriceX96: 6172232383251629775917976287024, // 6069.115046852635
                 tick: 87114,
-                fees: [uint256(0), 0],
+                fees: [uint256(0), 2448170862469857064377406228021655],
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
-                ],
+                ]
+            })
+        );
+
+        assertMany(
+            ExpectedPositionAndTicks({
+                pool: pool,
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [range1.tickLower, range1.tickUpper],
+                    liquidity: range1.amount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
+                ticks: [
+                    ExpectedTickShort({
+                        tick: range1.tickLower,
+                        initialized: true,
+                        liquidityGross: range1.amount,
+                        liquidityNet: int128(range1.amount)
+                    }),
+                    ExpectedTickShort({
+                        tick: range1.tickUpper,
+                        initialized: true,
+                        liquidityGross: range1.amount,
+                        liquidityNet: -int128(range1.amount)
+                    })
+                ]
+            })
+        );
+
+        assertMany(
+            ExpectedPositionAndTicks({
+                pool: pool,
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [range2.tickLower, range2.tickUpper],
+                    liquidity: range2.amount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
                 ticks: [
                     ExpectedTickShort({
                         tick: range2.tickLower,
@@ -279,26 +353,6 @@ contract PoolSwapTest is Test, TestUtils {
                         liquidityNet: -int128(range2.amount)
                     })
                 ]
-            })
-        );
-
-        assertTick(
-            ExpectedTick({
-                pool: pool,
-                tick: range1.tickLower,
-                initialized: true,
-                liquidityGross: range1.amount,
-                liquidityNet: int128(range1.amount)
-            })
-        );
-
-        assertTick(
-            ExpectedTick({
-                pool: pool,
-                tick: range1.tickUpper,
-                initialized: true,
-                liquidityGross: range1.amount,
-                liquidityNet: -int128(range1.amount)
             })
         );
     }
@@ -341,9 +395,16 @@ contract PoolSwapTest is Test, TestUtils {
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: liquidity[0].amount,
-                sqrtPriceX96: sqrtP(5003), // 5003
+                sqrtPriceX96: sqrtP(5003),
                 tick: tick(5003),
-                fees: [uint256(0), 0],
+                fees: [uint256(0), 7219139428759121781392346972620],
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [liquidity[0].tickLower, liquidity[0].tickUpper],
+                    liquidity: liquidity[0].amount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
@@ -417,7 +478,14 @@ contract PoolSwapTest is Test, TestUtils {
                 liquidity: liquidity[0].amount,
                 sqrtPriceX96: 5598698012665670113678845821468, // 4993.613415618091
                 tick: 85163,
-                fees: [uint256(0), 0],
+                fees: [3030558075390769907751941819, uint256(0)],
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [liquidity[0].tickLower, liquidity[0].tickUpper],
+                    liquidity: liquidity[0].amount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
@@ -468,7 +536,14 @@ contract PoolSwapTest is Test, TestUtils {
                 liquidity: liquidityAmount,
                 sqrtPriceX96: 5600460329217920380003911069891, // 4996.757615433415
                 tick: 85169,
-                fees: [uint256(0), 0],
+                fees: [1515279037695384953875970909, uint256(0)],
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [liquidity[0].tickLower, liquidity[0].tickUpper],
+                    liquidity: liquidityAmount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
@@ -528,17 +603,57 @@ contract PoolSwapTest is Test, TestUtils {
         assertEq(amount1Delta, expectedAmount1Delta);
 
         assertMany(
-            ExpectedMany({
+            ExpectedPoolAndBalances({
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: range2.amount,
                 sqrtPriceX96: 5069758350327724923607021157406, // 4094.6364762294834
                 tick: 83178,
-                fees: [uint256(0), 0],
+                fees: [505432482968936265929098748173, uint256(0)],
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
-                ],
+                ]
+            })
+        );
+
+        assertMany(
+            ExpectedPositionAndTicks({
+                pool: pool,
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [range1.tickLower, range1.tickUpper],
+                    liquidity: range1.amount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
+                ticks: [
+                    ExpectedTickShort({
+                        tick: range1.tickLower,
+                        initialized: true,
+                        liquidityGross: range1.amount + range2.amount,
+                        liquidityNet: int128(range1.amount - range2.amount)
+                    }),
+                    ExpectedTickShort({
+                        tick: range1.tickUpper,
+                        initialized: true,
+                        liquidityGross: range1.amount,
+                        liquidityNet: -int128(range1.amount)
+                    })
+                ]
+            })
+        );
+
+        assertMany(
+            ExpectedPositionAndTicks({
+                pool: pool,
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [range2.tickLower, range2.tickUpper],
+                    liquidity: range2.amount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
                 ticks: [
                     ExpectedTickShort({
                         tick: range2.tickLower,
@@ -553,26 +668,6 @@ contract PoolSwapTest is Test, TestUtils {
                         liquidityNet: int128(range1.amount - range2.amount)
                     })
                 ]
-            })
-        );
-
-        assertTick(
-            ExpectedTick({
-                pool: pool,
-                tick: range1.tickLower,
-                initialized: true,
-                liquidityGross: range1.amount + range2.amount,
-                liquidityNet: int128(range1.amount - range2.amount)
-            })
-        );
-
-        assertTick(
-            ExpectedTick({
-                pool: pool,
-                tick: range1.tickUpper,
-                initialized: true,
-                liquidityGross: range1.amount,
-                liquidityNet: -int128(range1.amount)
             })
         );
     }
@@ -614,17 +709,57 @@ contract PoolSwapTest is Test, TestUtils {
         assertEq(amount1Delta, expectedAmount1Delta);
 
         assertMany(
-            ExpectedMany({
+            ExpectedPoolAndBalances({
                 pool: pool,
                 tokens: [weth, usdc],
                 liquidity: range2.amount,
                 sqrtPriceX96: 5091198410869847077109758442744, // 4129.342226958015
                 tick: 83262,
-                fees: [uint256(0), 0],
+                fees: [483038147031209432005321726421, uint256(0)],
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
-                ],
+                ]
+            })
+        );
+
+        assertMany(
+            ExpectedPositionAndTicks({
+                pool: pool,
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [range1.tickLower, range1.tickUpper],
+                    liquidity: range1.amount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
+                ticks: [
+                    ExpectedTickShort({
+                        tick: range1.tickLower,
+                        initialized: true,
+                        liquidityGross: range1.amount,
+                        liquidityNet: int128(range1.amount)
+                    }),
+                    ExpectedTickShort({
+                        tick: range1.tickUpper,
+                        initialized: true,
+                        liquidityGross: range1.amount,
+                        liquidityNet: -int128(range1.amount)
+                    })
+                ]
+            })
+        );
+
+        assertMany(
+            ExpectedPositionAndTicks({
+                pool: pool,
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [range2.tickLower, range2.tickUpper],
+                    liquidity: range2.amount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
                 ticks: [
                     ExpectedTickShort({
                         tick: range2.tickLower,
@@ -639,26 +774,6 @@ contract PoolSwapTest is Test, TestUtils {
                         liquidityNet: -int128(range2.amount)
                     })
                 ]
-            })
-        );
-
-        assertTick(
-            ExpectedTick({
-                pool: pool,
-                tick: range1.tickLower,
-                initialized: true,
-                liquidityGross: range1.amount,
-                liquidityNet: int128(range1.amount)
-            })
-        );
-
-        assertTick(
-            ExpectedTick({
-                pool: pool,
-                tick: range1.tickUpper,
-                initialized: true,
-                liquidityGross: range1.amount,
-                liquidityNet: -int128(range1.amount)
             })
         );
     }
@@ -703,7 +818,14 @@ contract PoolSwapTest is Test, TestUtils {
                 liquidity: liquidity[0].amount,
                 sqrtPriceX96: sqrtP(4994),
                 tick: tick(4994),
-                fees: [uint256(0), 0],
+                fees: [2888143961667961523286488321, uint256(0)],
+                position: ExpectedPositionShort({
+                    owner: address(this),
+                    ticks: [liquidity[0].tickLower, liquidity[0].tickUpper],
+                    liquidity: liquidity[0].amount,
+                    feeGrowth: [uint256(0), 0],
+                    tokensOwed: [uint128(0), 0]
+                }),
                 userBalances: [uint256(userBalance0Before - amount0Delta), uint256(userBalance1Before - amount1Delta)],
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)

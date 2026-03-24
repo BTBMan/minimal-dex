@@ -133,4 +133,38 @@ library SqrtPriceMath {
             ? FullMath.mulDivRoundingUp(uint256(liquidity), sqrtRatioBX96 - sqrtRatioAX96, FixedPoint96.Q96)
             : mulDiv(uint256(liquidity), sqrtRatioBX96 - sqrtRatioAX96, FixedPoint96.Q96);
     }
+
+    /**
+     * @notice Calculate the amount0 delta between two prices
+     * @param sqrtRatioAX96 The square root of the price A
+     * @param sqrtRatioBX96 The square root of the price B
+     * @param liquidity The amount of liquidity, positive for mint, negative for burn
+     * @return amount0 The amount of token0
+     */
+    function getAmount0Delta(uint160 sqrtRatioAX96, uint160 sqrtRatioBX96, int128 liquidity)
+        internal
+        pure
+        returns (int256 amount0)
+    {
+        amount0 = liquidity < 0
+            ? -(int256(getAmount0Delta(sqrtRatioAX96, sqrtRatioBX96, uint128(-liquidity), false)))
+            : int256(getAmount0Delta(sqrtRatioAX96, sqrtRatioBX96, uint128(liquidity), true));
+    }
+
+    /**
+     * @notice Calculate the amount1 delta between two prices
+     * @param sqrtRatioAX96 The square root of the price A
+     * @param sqrtRatioBX96 The square root of the price B
+     * @param liquidity The amount of liquidity, positive for mint, negative for burn
+     * @return amount1 The amount of token1
+     */
+    function getAmount1Delta(uint160 sqrtRatioAX96, uint160 sqrtRatioBX96, int128 liquidity)
+        internal
+        pure
+        returns (int256 amount1)
+    {
+        amount1 = liquidity < 0
+            ? -(int256(getAmount1Delta(sqrtRatioAX96, sqrtRatioBX96, uint128(-liquidity), false)))
+            : int256(getAmount1Delta(sqrtRatioAX96, sqrtRatioBX96, uint128(liquidity), true));
+    }
 }
