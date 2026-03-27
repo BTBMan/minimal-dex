@@ -10,6 +10,12 @@ interface IPool {
         uint160 sqrtPriceX96;
         // Current tick
         int24 tick;
+        // Most recently observation index
+        uint16 observationIndex;
+        // The maximum number of the observations
+        uint16 observationCardinality;
+        // The next maximum number of the observations
+        uint16 observationCardinalityNext;
     }
 
     struct CallbackData {

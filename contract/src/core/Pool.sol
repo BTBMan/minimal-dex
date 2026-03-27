@@ -26,6 +26,7 @@ import {SwapMath} from "./../libraries/SwapMath.sol";
 import {FullMath} from "./../libraries/FullMath.sol";
 import {LiquidityMath} from "./../libraries/LiquidityMath.sol";
 import {FixedPoint128} from "./../libraries/FixedPoint128.sol";
+import {Oracle} from "./../libraries/Oracle.sol";
 
 /**
  * @title Pool
@@ -40,6 +41,7 @@ contract Pool is IPool {
     using Position for mapping(bytes32 tick => Position.Info);
     using Position for Position.Info;
     using TickBitmap for mapping(int16 word => uint256 tick);
+    using Oracle for Oracle.Observation[65535]; // Array with a maximum of 65535 Observations
 
     ////////////////////////////////////
     // State variables                //
@@ -67,6 +69,9 @@ contract Pool is IPool {
 
     // Current price and its corresponding tick
     Slot0 public slot0;
+
+    // Observations
+    Oracle.Observation[65535] public observations;
 
     // Amount of liquidity, L.
     uint128 public liquidity;
@@ -114,7 +119,17 @@ contract Pool is IPool {
 
         int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
 
-        slot0 = Slot0({sqrtPriceX96: sqrtPriceX96, tick: tick});
+        // Initialize the observations
+
+        (uint16 cardinality, uint16 cardinalityNext) = observations.initialize(_blockTimestamp());
+
+        slot0 = Slot0({
+            sqrtPriceX96: sqrtPriceX96,
+            tick: tick,
+            observationIndex: 0,
+            observationCardinality: cardinality,
+            observationCardinalityNext: cardinalityNext
+        });
 
         emit Initialize(sqrtPriceX96, tick);
     }
@@ -475,6 +490,9 @@ contract Pool is IPool {
 
         // Update slot0
         if (state.tick != slot0Start.tick) {
+            // Write the observations
+            // observations.
+
             (slot0.tick, slot0.sqrtPriceX96) = (state.tick, state.sqrtPriceX96);
         }
 
@@ -573,6 +591,10 @@ contract Pool is IPool {
 
     function balance1() private view returns (uint256) {
         return IERC20(token1).balanceOf(address(this));
+    }
+
+    function _blockTimestamp() private view returns (uint32) {
+        return uint32(block.timestamp);
     }
 
     // Private view ////////////////////
