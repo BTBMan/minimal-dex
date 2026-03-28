@@ -14,7 +14,7 @@ pragma solidity ^0.8.27;
 library Oracle {
     struct Observation {
         // Block timestamp
-        uint32 timestamp;
+        uint32 blockTimestamp;
         // The cumulative of the tick
         int56 tickCumulative;
         // Whether the tick is initialized
@@ -31,7 +31,7 @@ library Oracle {
         internal
         returns (uint16 cardinality, uint16 cardinalityNext)
     {
-        self[0] = Observation({timestamp: time, tickCumulative: 0, initialized: true});
+        self[0] = Observation({blockTimestamp: time, tickCumulative: 0, initialized: true});
 
         // Set cardinality and cardinalityNext to 1 when the pool is initialized
         cardinality = 1;
@@ -59,8 +59,47 @@ library Oracle {
         Observation memory last = self[index];
 
         // Return if already written in the same block
-        if (timestamp == last.timestamp) return (index, cardinality);
+        if (timestamp == last.blockTimestamp) return (index, cardinality);
 
-        //
+        if (cardinalityNext > cardinality && index == (cardinality - 1)) {
+            // When the length of the populated elements is less than the maximum length of the oracle array
+            // And the index of the most recently written element in the array is the last element of the cardinality
+            // We need to update the cardinality to the new next cardinality
+            cardinalityUpdated = cardinalityNext;
+        } else {
+            // Otherwise, that means the cardinality is equal or greater than the maximum length of the oracle array
+            // Or the populated elements includes the old observations and the new observations
+            // Make the cardinality the same as the previous cardinality
+            cardinalityUpdated = cardinality;
+        }
+
+        // Update the most recently written observation index
+        // Modulo operation is used to make sure the index is always inside the range of the maximum length of the array
+        indexUpdated = (index + 1) % cardinalityUpdated;
+
+        // Update the observation of the new index
+        self[indexUpdated] = transform(last, timestamp, tick);
+    }
+
+    /**
+     * @notice Transform the observation to the new observation
+     * @param last The last observation
+     * @param blockTimestamp The block timestamp
+     * @param tick The tick of the sqrtPriceX96
+     * @return newObservation The new observation after transformation
+     */
+    function transform(Observation memory last, uint32 blockTimestamp, int24 tick)
+        internal
+        pure
+        returns (Observation memory)
+    {
+        // Get the seconds elapsed since the last observation
+        uint32 delta = blockTimestamp - last.blockTimestamp;
+
+        return Observation({
+            blockTimestamp: blockTimestamp,
+            tickCumulative: last.tickCumulative + int56(tick) * int56(int32(delta)),
+            initialized: true
+        });
     }
 }

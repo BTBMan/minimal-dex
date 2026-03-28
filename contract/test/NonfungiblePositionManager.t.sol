@@ -64,7 +64,7 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
             )
         );
 
-        (uint160 sqrtPriceX96,) = pool.slot0();
+        (uint160 sqrtPriceX96,,,,) = pool.slot0();
 
         assertEq(sqrtPriceX96, initializedSqrtPriceX96);
     }

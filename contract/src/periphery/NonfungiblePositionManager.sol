@@ -67,7 +67,7 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
         IPool pool = IPool(IFactory(factory).getPool(params.token0, params.token1, 1));
 
         // Get current sqrt price of the current pool
-        (uint160 sqrtPriceX96,) = pool.slot0();
+        (uint160 sqrtPriceX96,,,,) = pool.slot0();
         // Calculate tickLower/tickUpper sqrt price
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(params.tickLower);
         uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(params.tickUpper);
@@ -102,7 +102,7 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
             pool = IFactory(factory).createPool(tokenA, tokenB, fee);
             IPool(pool).initialize(sqrtPriceX96);
         } else {
-            (uint160 sqrtPriceX96Existing,) = IPool(pool).slot0();
+            (uint160 sqrtPriceX96Existing,,,,) = IPool(pool).slot0();
             if (sqrtPriceX96Existing == 0) {
                 IPool(pool).initialize(sqrtPriceX96);
             }

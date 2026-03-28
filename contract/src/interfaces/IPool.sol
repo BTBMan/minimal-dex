@@ -103,7 +103,16 @@ interface IPool {
             uint256 feeGrowthOutside0X128,
             uint256 feeGrowthOutside1X128
         );
-    function slot0() external view returns (uint160 sqrtPriceX96, int24 tick);
+    function slot0()
+        external
+        view
+        returns (
+            uint160 sqrtPriceX96,
+            int24 tick,
+            uint16 observationIndex,
+            uint16 observationCardinality,
+            uint16 observationCardinalityNext
+        );
     function liquidity() external view returns (uint128 liquidity);
 
     function initialize(uint160 sqrtPriceX96) external;

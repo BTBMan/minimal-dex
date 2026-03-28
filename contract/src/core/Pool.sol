@@ -120,7 +120,6 @@ contract Pool is IPool {
         int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
 
         // Initialize the observations
-
         (uint16 cardinality, uint16 cardinalityNext) = observations.initialize(_blockTimestamp());
 
         slot0 = Slot0({
@@ -491,9 +490,16 @@ contract Pool is IPool {
         // Update slot0
         if (state.tick != slot0Start.tick) {
             // Write the observations
-            // observations.
+            (uint16 observationIndex, uint16 observationCardinality) = observations.write(
+                slot0.observationIndex,
+                _blockTimestamp(),
+                slot0.tick,
+                slot0.observationCardinality,
+                slot0.observationCardinalityNext
+            );
 
-            (slot0.tick, slot0.sqrtPriceX96) = (state.tick, state.sqrtPriceX96);
+            (slot0.tick, slot0.sqrtPriceX96, slot0.observationIndex, slot0.observationCardinality) =
+            (state.tick, state.sqrtPriceX96, observationIndex, observationCardinality);
         }
 
         // Send token to recipient
