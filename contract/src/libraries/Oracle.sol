@@ -79,7 +79,7 @@ library Oracle {
         // Modulo operation is used to make sure the index is always inside the range of the maximum length of the array
         indexUpdated = (index + 1) % cardinalityUpdated;
 
-        // Update the observation of the new index
+        // Update the observation at the new index
         self[indexUpdated] = transform(last, timestamp, tick);
     }
 
@@ -127,5 +127,55 @@ library Oracle {
         }
 
         return next;
+    }
+
+    function observeSingle(
+        Observation[65535] storage self,
+        uint32 time,
+        uint32 secondsAgo,
+        int24 tick,
+        uint16 index,
+        uint16 cardinality
+    ) internal returns (int56) {
+        // secondsAgo == 0 means search the observation of the current time
+        if (secondsAgo == 0) {
+            // Find the last observation
+            Observation memory last = self[index];
+
+            // If the last.blockTimestamp != current time means the current time greater than the last block timestamp
+            // It can not be less than last block timestamp
+            if (last.blockTimestamp != time) {
+                // Update the `last` to the observation of the latest block timestamp
+                last = transform(last, time, tick);
+            }
+
+            return last.tickCumulative;
+        }
+
+        // TODO binary search
+    }
+
+    /**
+     * @notice Return each cumulation of the each seconds ago
+     * @param time Usually, the current block timestamp
+     * @param secondsAgos The time we want to query the tick cumulation (in second)
+     * @param tick Usually, the current tick
+     * @param index The index of the most recently written observation in array
+     * @param cardinality The number of the populated elements in array
+     * @return tickCumulatives The each tick cumulative of each secondsAgo
+     */
+    function observe(
+        Observation[65535] storage self,
+        uint32 time,
+        uint32[] memory secondsAgos,
+        int24 tick,
+        uint16 index,
+        uint16 cardinality
+    ) internal returns (int56[] memory tickCumulatives) {
+        tickCumulatives = new int56[](secondsAgos.length);
+
+        for (uint256 i = 0; i < secondsAgos.length; i++) {
+            tickCumulatives[i] = observeSingle(self, time, secondsAgos[i], tick, index, cardinality);
+        }
     }
 }
