@@ -109,6 +109,23 @@ contract Pool is IPool {
     // External functions             //
     ////////////////////////////////////
     /**
+     * @notice Increase the maximum number of the observations
+     * @param observationCardinalityNext The new maximum number of the observations
+     */
+    function increaseObservationCardinalityNext(uint16 observationCardinalityNext) external {
+        uint16 observationCardinalityNextOld = slot0.observationCardinalityNext;
+        uint16 observationCardinalityNextNew =
+            observations.grow(observationCardinalityNextOld, observationCardinalityNext);
+
+        if (observationCardinalityNextNew != observationCardinalityNextOld) {
+            // Update the new observation cardinality
+            slot0.observationCardinalityNext = observationCardinalityNextNew;
+
+            emit IncreaseObservationCardinalityNext(observationCardinalityNextOld, observationCardinalityNextNew);
+        }
+    }
+
+    /**
      * @notice Initialize the pool
      * @param sqrtPriceX96 The initial sqrt price Q96
      */

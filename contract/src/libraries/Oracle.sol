@@ -21,6 +21,8 @@ library Oracle {
         bool initialized;
     }
 
+    error NotZeroCardinality();
+
     /**
      * @notice Initialize the observation
      * @param time The block timestamp
@@ -101,5 +103,29 @@ library Oracle {
             tickCumulative: last.tickCumulative + int56(tick) * int56(int32(delta)),
             initialized: true
         });
+    }
+
+    /**
+     * @notice Grow the oracle array
+     * @param self The oracle array
+     * @param current The current cardinality
+     * @param next The new cardinality
+     * @return next The new cardinality
+     */
+    function grow(Observation[65535] storage self, uint16 current, uint16 next) internal returns (uint16) {
+        if (current <= 0) {
+            revert NotZeroCardinality();
+        }
+
+        if (next <= current) {
+            return current;
+        }
+
+        // Fill the array
+        for (uint16 i = current; i < next; i++) {
+            self[i].blockTimestamp = 1;
+        }
+
+        return next;
     }
 }
