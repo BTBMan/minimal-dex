@@ -129,6 +129,97 @@ library Oracle {
         return next;
     }
 
+    /**
+     * @notice Time comparator(Less Than or Equal to the current time)
+     * @dev a <= b <= time
+     */
+    function lte(uint32 time, uint32 a, uint32 b) internal pure returns (bool) {
+        if (a <= time && b <= time) return a <= b;
+
+        // If a and b greater than the current time
+        // Means a and b are in the next 32-bit cycle(overflowed)
+        // We need to unify the cycle to compare a and b
+        uint256 aAdjusted = a > time ? a : a + 2 ** 32;
+        uint256 bAdjusted = b > time ? b : b + 2 ** 32;
+
+        return aAdjusted <= bAdjusted;
+    }
+
+    /**
+     * @notice Get the observation beforeOrAt and atOrAfter a given target
+     * @param time Usually, the current block timestamp
+     * @param target A timestamp which we want to query the observation
+     * @param index The index of the most recently written observation in array
+     * @param cardinality The number of the populated elements in array
+     * @return beforeOrAt The each tick cumulative of each secondsAg
+     * @return atOrAfter The each tick cumulative of each secondsAg
+     */
+    function binarySearch(Observation[65535] storage self, uint32 time, uint32 target, uint16 index, uint16 cardinality)
+        internal
+        returns (Observation memory beforeOrAt, Observation memory atOrAfter)
+    {
+        //   [1, 2, 3, 4, 5]
+        //    ↑           ↑
+        // oldest[0]   index[4]
+        // ----------------------
+        //   [6,         2, 3, 4, 5]
+        //    ↑          ↑
+        // index[0]   oldest[1]
+        uint256 l = (index + 1) % cardinality; // The index of the oldest observation(left side)
+        //   [6, 7, 8,   4, 5]+[v, v, v]
+        //          ↑    ↑            ↑
+        //          ↑ oldest[3]    newest[3+5-1=7] [7%5=2]
+        //          ↑                                   ↓
+        //          ↑___________________________________↓
+        // --------With uninitialize---------------
+        //   [1, 2, 3,   4, 5,      6(un), 7(un)]+[v, v, v, v, v]
+        //                  ↑       ↑                          ↑
+        //              newest[4] oldest[5]                 newest[5+7-1=11] [11%7=4]
+        //                  ↑                                                      ↓
+        //                  ↑______________________________________________________↓
+        uint256 r = l + cardinality - 1; // The index of the newest observation(right side)
+        uint256 i; // The middle index
+
+        while (true) {
+            i = (l + r) / 2;
+
+            beforeOrAt = self[i % cardinality];
+
+            // The uninitialized observation is always start from the left to the right
+            if (!beforeOrAt.initialized) {
+                l = i + 1;
+                continue;
+            }
+
+            atOrAfter = self[(i + 1) % cardinality];
+
+            // if(beforeOrAt.blockTimestamp<target){
+            //     l = i
+            // }
+        }
+    }
+
+    /**
+     * @notice Get the observation beforeOrAt and atOrAfter a given target
+     * @param time Usually, the current block timestamp
+     * @param target A timestamp which we want to query the observation
+     * @param tick Usually, the current tick
+     * @param index The index of the most recently written observation in array
+     * @param cardinality The number of the populated elements in array
+     * @return beforeOrAt The each tick cumulative of each secondsAg
+     * @return atOrAfter The each tick cumulative of each secondsAg
+     */
+    function getSurroundingObservations(
+        Observation[65535] storage self,
+        uint32 time,
+        uint32 target,
+        int24 tick,
+        uint16 index,
+        uint16 cardinality
+    ) internal returns (Observation memory beforeOrAt, Observation memory atOrAfter) {
+        return binarySearch(self, time, target, index, cardinality);
+    }
+
     function observeSingle(
         Observation[65535] storage self,
         uint32 time,
@@ -152,7 +243,10 @@ library Oracle {
             return last.tickCumulative;
         }
 
-        // TODO binary search
+        uint32 target = time - secondsAgo;
+
+        (Observation memory beforeOrAt, Observation memory atOrAfter) =
+            getSurroundingObservations(self, time, target, tick, index, cardinality);
     }
 
     /**
