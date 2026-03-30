@@ -5,7 +5,8 @@ interface INonfungiblePositionManager {
     struct MintParams {
         address token0;
         address token1;
-        // The LP token recipient
+        uint24 fee;
+        // The NFT token recipient
         address recipient;
         int24 tickLower;
         int24 tickUpper;
@@ -19,8 +20,41 @@ interface INonfungiblePositionManager {
         uint256 amount1Min;
     }
 
+    struct AddLiquidityParams {
+        address token0;
+        address token1;
+        uint24 fee;
+        // The amount out token recipient
+        address recipient;
+        int24 tickLower;
+        int24 tickUpper;
+        uint256 amount0Desired;
+        uint256 amount1Desired;
+        uint256 amount0Min;
+        uint256 amount1Min;
+    }
+
+    struct IncreaseLiquidityParams {
+        uint256 tokenId;
+        uint256 amount0Desired;
+        uint256 amount1Desired;
+        uint256 amount0Min;
+        uint256 amount1Min;
+    }
+
+    struct Position {
+        address pool;
+        int24 tickLower;
+        int24 tickUpper;
+    }
+
     error SlippageCheckFailed(uint256 amount0, uint256 amount1);
 
-    // function createAndInitializePoolIfNecessary() external;
-    function mint(MintParams calldata params) external returns (uint256 amount0, uint256 amount1);
+    event IncreaseLiquidity(uint256 tokenId, uint256 amount0, uint256 amount1);
+    event DecreaseLiquidity(uint256 tokenId, uint256 amount0, uint256 amount1);
+
+    function createAndInitializePoolIfNecessary(address tokenA, address tokenB, uint24 fee, uint160 sqrtPriceX96)
+        external
+        returns (address pool);
+    function mint(MintParams calldata params) external returns (uint256 amount0, uint256 amount1, uint256 tokenId);
 }

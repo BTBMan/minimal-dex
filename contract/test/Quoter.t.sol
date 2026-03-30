@@ -49,10 +49,11 @@ contract QuoterTest is Test, TestUtils {
             ERC20Mock(mintParams.token0).approve(address(nonfungiblePositionManager), mintParams.amount0Desired);
             ERC20Mock(mintParams.token1).approve(address(nonfungiblePositionManager), mintParams.amount1Desired);
 
-            (poolBalance0, poolBalance1) = nonfungiblePositionManager.mint(
+            (poolBalance0, poolBalance1,) = nonfungiblePositionManager.mint(
                 INonfungiblePositionManager.MintParams({
                     token0: mintParams.token0,
                     token1: mintParams.token1,
+                    fee: 1,
                     recipient: address(this),
                     tickLower: mintParams.tickLower,
                     tickUpper: mintParams.tickUpper,
