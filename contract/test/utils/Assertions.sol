@@ -17,13 +17,7 @@ abstract contract Assertions is Test {
     }
 
     function assertPoolState(ExpectedPoolState memory expected) internal view {
-        (
-            uint160 sqrtPriceX96,
-            int24 currentTick,
-            uint16 observationIndex,
-            uint16 observationCardinality,
-            uint16 observationCardinalityNext
-        ) = expected.pool.slot0();
+        (uint160 sqrtPriceX96, int24 currentTick,,,) = expected.pool.slot0();
         assertEq(sqrtPriceX96, expected.sqrtPriceX96, "invalid current sqrtP");
         assertEq(currentTick, expected.tick, "invalid current tick");
         assertEq(expected.pool.liquidity(), expected.liquidity, "invalid current liquidity");
@@ -101,15 +95,15 @@ abstract contract Assertions is Test {
         bool initialized;
     }
 
-    // function assertObservation(ExpectedObservation memory expected) internal {
-    //     (uint32 timestamp, int56 tickCumulative, bool initialized) = expected.pool.observations(expected.index);
+    function assertObservation(ExpectedObservation memory expected) internal view {
+        (uint32 timestamp, int56 tickCumulative, bool initialized) = expected.pool.observations(expected.index);
 
-    //     assertEq(timestamp, expected.timestamp, "incorrect observation timestamp");
+        assertEq(timestamp, expected.timestamp, "incorrect observation timestamp");
 
-    //     assertEq(tickCumulative, expected.tickCumulative, "incorrect observation cumulative tick");
+        assertEq(tickCumulative, expected.tickCumulative, "incorrect observation cumulative tick");
 
-    //     assertEq(initialized, expected.initialized, "incorrect observation initialization state");
-    // }
+        assertEq(initialized, expected.initialized, "incorrect observation initialization state");
+    }
 
     struct ExpectedMany {
         Pool pool;
@@ -127,7 +121,7 @@ abstract contract Assertions is Test {
         // Ticks
         ExpectedTickShort[2] ticks;
         // // Observation
-        // ExpectedObservationShort observation;
+        ExpectedObservationShort observation;
     }
 
     function assertMany(ExpectedMany memory expected) internal view {
@@ -181,15 +175,15 @@ abstract contract Assertions is Test {
             })
         );
 
-        // assertObservation(
-        //     ExpectedObservation({
-        //         pool: expected.pool,
-        //         index: expected.observation.index,
-        //         timestamp: expected.observation.timestamp,
-        //         tickCumulative: expected.observation.tickCumulative,
-        //         initialized: expected.observation.initialized
-        //     })
-        // );
+        assertObservation(
+            ExpectedObservation({
+                pool: expected.pool,
+                index: expected.observation.index,
+                timestamp: expected.observation.timestamp,
+                tickCumulative: expected.observation.tickCumulative,
+                initialized: expected.observation.initialized
+            })
+        );
     }
 
     struct ExpectedPoolAndBalances {

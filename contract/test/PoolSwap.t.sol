@@ -71,7 +71,8 @@ contract PoolSwapTest is Test, TestUtils {
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
                 ],
-                ticks: rangeToTicks(liquidity[0])
+                ticks: rangeToTicks(liquidity[0]),
+                observation: ExpectedObservationShort({index: 0, timestamp: 1, tickCumulative: 0, initialized: true})
             })
         );
     }
@@ -142,7 +143,8 @@ contract PoolSwapTest is Test, TestUtils {
                         liquidityGross: liquidityAmount,
                         liquidityNet: -int128(liquidityAmount)
                     })
-                ]
+                ],
+                observation: ExpectedObservationShort({index: 0, timestamp: 1, tickCumulative: 0, initialized: true})
             })
         );
     }
@@ -409,7 +411,8 @@ contract PoolSwapTest is Test, TestUtils {
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
                 ],
-                ticks: rangeToTicks(liquidity[0])
+                ticks: rangeToTicks(liquidity[0]),
+                observation: ExpectedObservationShort({index: 0, timestamp: 1, tickCumulative: 0, initialized: true})
             })
         );
     }
@@ -490,7 +493,8 @@ contract PoolSwapTest is Test, TestUtils {
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
                 ],
-                ticks: rangeToTicks(liquidity[0])
+                ticks: rangeToTicks(liquidity[0]),
+                observation: ExpectedObservationShort({index: 0, timestamp: 1, tickCumulative: 0, initialized: true})
             })
         );
     }
@@ -561,7 +565,8 @@ contract PoolSwapTest is Test, TestUtils {
                         liquidityGross: liquidityAmount,
                         liquidityNet: -int128(liquidityAmount)
                     })
-                ]
+                ],
+                observation: ExpectedObservationShort({index: 0, timestamp: 1, tickCumulative: 0, initialized: true})
             })
         );
     }
@@ -830,7 +835,8 @@ contract PoolSwapTest is Test, TestUtils {
                 poolBalances: [
                     uint256(int256(poolBalance0) + amount0Delta), uint256(int256(poolBalance1) + amount1Delta)
                 ],
-                ticks: rangeToTicks(liquidity[0])
+                ticks: rangeToTicks(liquidity[0]),
+                observation: ExpectedObservationShort({index: 0, timestamp: 1, tickCumulative: 0, initialized: true})
             })
         );
     }
@@ -857,5 +863,125 @@ contract PoolSwapTest is Test, TestUtils {
 
         vm.expectRevert(encodeError("NotEnoughLiquidity()"));
         pool.swap(address(this), true, swapAmount, sqrtP(4000), callbackData);
+    }
+
+    function testObservations() public {
+        LiquidityRange[] memory liquidity = new LiquidityRange[](1);
+        liquidity[0] = liquidityRange(4540, 5500, 1 ether, 5000 ether, 5000);
+        PoolParams memory poolParams = PoolParams({
+            wethBalance: 1 ether,
+            usdcBalance: 5000 ether,
+            currentPrice: 5000,
+            liquidity: liquidity,
+            shouldTransferInCallback: true,
+            mintLiquidity: true
+        });
+        setupTestCase(poolParams);
+
+        assertObservation(
+            ExpectedObservation({pool: pool, index: 0, timestamp: 1, tickCumulative: 0, initialized: true})
+        );
+
+        uint256 swapAmount = 100 ether;
+        usdc.mint(address(this), swapAmount * 10);
+        usdc.approve(address(this), swapAmount * 10);
+
+        uint256 swapAmount2 = 1 ether;
+        weth.mint(address(this), swapAmount2 * 10);
+        weth.approve(address(this), swapAmount2 * 10);
+
+        // Mint and Swap are in the same block timestamp, so the tickCumulative is 0
+        (, int24 tickBeforeSwap,,,) = pool.slot0();
+        int56 tickCumulative = tickBeforeSwap * 0;
+        pool.swap(address(this), false, swapAmount, sqrtP(6000), callbackData);
+        assertObservation(
+            ExpectedObservation({pool: pool, index: 0, timestamp: 1, tickCumulative: tickCumulative, initialized: true})
+        );
+
+        vm.warp(7);
+        (, tickBeforeSwap,,,) = pool.slot0();
+        tickCumulative += tickBeforeSwap * (7 - 1);
+        pool.swap(address(this), true, swapAmount2, sqrtP(4000), callbackData);
+        assertObservation(
+            ExpectedObservation({pool: pool, index: 0, timestamp: 7, tickCumulative: tickCumulative, initialized: true})
+        );
+
+        vm.warp(20);
+        (, tickBeforeSwap,,,) = pool.slot0();
+        tickCumulative += tickBeforeSwap * (20 - 7);
+        pool.swap(address(this), false, swapAmount, sqrtP(6000), callbackData);
+        assertObservation(
+            ExpectedObservation({
+                pool: pool, index: 0, timestamp: 20, tickCumulative: tickCumulative, initialized: true
+            })
+        );
+    }
+
+    function testObserve() public {
+        LiquidityRange[] memory liquidity = new LiquidityRange[](1);
+        liquidity[0] = liquidityRange(4540, 5500, 1 ether, 5000 ether, 5000);
+        PoolParams memory poolParams = PoolParams({
+            wethBalance: 1 ether,
+            usdcBalance: 5000 ether,
+            currentPrice: 5000,
+            liquidity: liquidity,
+            shouldTransferInCallback: true,
+            mintLiquidity: true
+        });
+        setupTestCase(poolParams);
+
+        pool.increaseObservationCardinalityNext(3);
+
+        uint256 swapAmount = 100 ether;
+        usdc.mint(address(this), swapAmount * 10);
+        usdc.approve(address(this), swapAmount * 10);
+
+        uint256 swapAmount2 = 1 ether;
+        weth.mint(address(this), swapAmount2 * 10);
+        weth.approve(address(this), swapAmount2 * 10);
+
+        vm.warp(2);
+        pool.swap(address(this), false, swapAmount, sqrtP(6000), callbackData);
+
+        vm.warp(7);
+        pool.swap(address(this), true, swapAmount2, sqrtP(4000), callbackData);
+
+        vm.warp(20);
+        pool.swap(address(this), false, swapAmount, sqrtP(6000), callbackData);
+
+        uint32[] memory secondsAgos = new uint32[](4);
+        secondsAgos[0] = 0;
+        secondsAgos[1] = 13;
+        secondsAgos[2] = 17;
+        secondsAgos[3] = 18;
+
+        int56[] memory tickCumulatives = pool.observe(secondsAgos);
+        assertEq(tickCumulatives[0], 1606695);
+        assertEq(tickCumulatives[1], 511146);
+        assertEq(tickCumulatives[2], 170370);
+        assertEq(tickCumulatives[3], 85176);
+
+        assertEq(uint32(uint56(tickCumulatives[0] - tickCumulatives[1])) / (secondsAgos[1] - secondsAgos[0]), 84273);
+        assertEq(uint32(uint56(tickCumulatives[1] - tickCumulatives[2])) / (secondsAgos[2] - secondsAgos[1]), 85194);
+        assertEq(uint32(uint56(tickCumulatives[2] - tickCumulatives[3])) / (secondsAgos[3] - secondsAgos[2]), 85194);
+
+        secondsAgos = new uint32[](5);
+        secondsAgos[0] = 0;
+        secondsAgos[1] = 5;
+        secondsAgos[2] = 10;
+        secondsAgos[3] = 15;
+        secondsAgos[4] = 18;
+
+        tickCumulatives = pool.observe(secondsAgos);
+        assertEq(tickCumulatives[0], 1606695);
+        assertEq(tickCumulatives[1], 1185330);
+        assertEq(tickCumulatives[2], 763965);
+        assertEq(tickCumulatives[3], 340758);
+        assertEq(tickCumulatives[4], 85176);
+
+        assertEq(uint32(uint56(tickCumulatives[0] - tickCumulatives[1])) / (secondsAgos[1] - secondsAgos[0]), 84273);
+        assertEq(uint32(uint56(tickCumulatives[1] - tickCumulatives[2])) / (secondsAgos[2] - secondsAgos[1]), 84273);
+        assertEq(uint32(uint56(tickCumulatives[2] - tickCumulatives[3])) / (secondsAgos[3] - secondsAgos[2]), 84641);
+        assertEq(uint32(uint56(tickCumulatives[3] - tickCumulatives[4])) / (secondsAgos[4] - secondsAgos[3]), 85194);
     }
 }

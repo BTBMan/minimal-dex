@@ -49,7 +49,8 @@ contract PoolTest is Test, TestUtils {
                 }),
                 userBalances: [1 ether - expectedAmount0, 5000 ether - expectedAmount1],
                 poolBalances: [expectedAmount0, expectedAmount1],
-                ticks: rangeToTicks(liquidity[0])
+                ticks: rangeToTicks(liquidity[0]),
+                observation: ExpectedObservationShort({index: 0, timestamp: 1, tickCumulative: 0, initialized: true})
             })
         );
     }
@@ -119,7 +120,8 @@ contract PoolTest is Test, TestUtils {
                     ExpectedTickShort({
                         tick: liquidity[0].tickUpper, initialized: true, liquidityGross: 0, liquidityNet: 0
                     })
-                ]
+                ],
+                observation: ExpectedObservationShort({index: 0, timestamp: 1, tickCumulative: 0, initialized: true})
             })
         );
     }
