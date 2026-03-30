@@ -22,6 +22,7 @@ library Oracle {
     }
 
     error NotZeroCardinality();
+    error TooOldObservation();
 
     /**
      * @notice Initialize the observation
@@ -156,6 +157,7 @@ library Oracle {
      */
     function binarySearch(Observation[65535] storage self, uint32 time, uint32 target, uint16 index, uint16 cardinality)
         internal
+        view
         returns (Observation memory beforeOrAt, Observation memory atOrAfter)
     {
         //   [1, 2, 3, 4, 5]
@@ -193,9 +195,19 @@ library Oracle {
 
             atOrAfter = self[(i + 1) % cardinality];
 
-            // if(beforeOrAt.blockTimestamp<target){
-            //     l = i
-            // }
+            bool targetAtOrAfter = lte(time, beforeOrAt.blockTimestamp, target);
+            bool targetBeforeOrAt = lte(time, target, atOrAfter.blockTimestamp);
+
+            // If the target is between beforeOrAt and atOrAfter, break the loop
+            if (targetAtOrAfter && targetBeforeOrAt) {
+                break;
+            }
+
+            if (!targetAtOrAfter) {
+                r = i - 1;
+            } else {
+                l = i + 1;
+            }
         }
     }
 
@@ -216,7 +228,36 @@ library Oracle {
         int24 tick,
         uint16 index,
         uint16 cardinality
-    ) internal returns (Observation memory beforeOrAt, Observation memory atOrAfter) {
+    ) internal view returns (Observation memory beforeOrAt, Observation memory atOrAfter) {
+        // Optimistically set the newest observation to beforeOrAt
+        beforeOrAt = self[index];
+
+        // If target is equal or greater than the newest observation
+        if (lte(time, beforeOrAt.blockTimestamp, target)) {
+            if (beforeOrAt.blockTimestamp == target) {
+                // If target is equal to the newest observation
+                // Just return the newest observation as the beforeOrAt, ignore the atOrAfter
+                return (beforeOrAt, atOrAfter);
+            } else {
+                // If target is greater than the newest observation
+                // We should transform the time that between the newest observation and the target
+                return (beforeOrAt, transform(beforeOrAt, target, tick));
+            }
+        }
+
+        // Set beforeOrAt to the oldest observation
+        beforeOrAt = self[(index + 1) % cardinality];
+        if (!beforeOrAt.initialized) {
+            // If beforeOrAt is not initialized, means the rest of the elements start from beforeOrAt are not initialized
+            // So, the oldest observation is the first element
+            beforeOrAt = self[0];
+        }
+
+        // Ensure the oldest observation than the target
+        if (!lte(time, beforeOrAt.blockTimestamp, target)) {
+            revert TooOldObservation();
+        }
+
         return binarySearch(self, time, target, index, cardinality);
     }
 
@@ -227,7 +268,7 @@ library Oracle {
         int24 tick,
         uint16 index,
         uint16 cardinality
-    ) internal returns (int56) {
+    ) internal view returns (int56) {
         // secondsAgo == 0 means search the observation of the current time
         if (secondsAgo == 0) {
             // Find the last observation
@@ -247,6 +288,19 @@ library Oracle {
 
         (Observation memory beforeOrAt, Observation memory atOrAfter) =
             getSurroundingObservations(self, time, target, tick, index, cardinality);
+
+        if (target == beforeOrAt.blockTimestamp) {
+            return beforeOrAt.tickCumulative;
+        } else if (target == atOrAfter.blockTimestamp) {
+            return atOrAfter.tickCumulative;
+        } else {
+            uint56 observationTimeDelta = atOrAfter.blockTimestamp - beforeOrAt.blockTimestamp;
+            uint56 targetDelta = target - beforeOrAt.blockTimestamp;
+
+            return beforeOrAt.tickCumulative
+                + ((atOrAfter.tickCumulative - beforeOrAt.tickCumulative) / int56(observationTimeDelta))
+                * int56(targetDelta);
+        }
     }
 
     /**
@@ -265,7 +319,7 @@ library Oracle {
         int24 tick,
         uint16 index,
         uint16 cardinality
-    ) internal returns (int56[] memory tickCumulatives) {
+    ) internal view returns (int56[] memory tickCumulatives) {
         tickCumulatives = new int56[](secondsAgos.length);
 
         for (uint256 i = 0; i < secondsAgos.length; i++) {

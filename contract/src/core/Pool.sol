@@ -109,6 +109,17 @@ contract Pool is IPool {
     // External functions             //
     ////////////////////////////////////
     /**
+     * @notice Get the tick cumulatives
+     * @param secondsAgos From how long ago each cumulative tick should be returned
+     * @return tickCumulatives The each tick cumulative of each secondsAgo
+     */
+    function observe(uint32[] calldata secondsAgos) external view returns (int56[] memory tickCumulatives) {
+        return observations.observe(
+            _blockTimestamp(), secondsAgos, slot0.tick, slot0.observationIndex, slot0.observationCardinality
+        );
+    }
+
+    /**
      * @notice Increase the maximum number of the observations
      * @param observationCardinalityNext The new maximum number of the observations
      */
