@@ -103,14 +103,43 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
         vm.deal(user, STARTING_BALANCE);
     }
 
+    function divRound(int128 x, int128 y) internal pure returns (int128 result) {
+        int128 quot = ABDKMath64x64.div(x, y);
+        result = quot >> 64;
+
+        // Check if remainder is greater than 0.5
+        if (quot % 2 ** 64 >= 0x8000000000000000) {
+            result += 1;
+        }
+    }
+
+    function nearestUsableTick(int24 tick_, uint24 tickSpacing) internal pure returns (int24 result) {
+        result = int24(divRound(int128(tick_), int128(int24(tickSpacing)))) * int24(tickSpacing);
+
+        if (result < TickMath.MIN_TICK) {
+            result += int24(tickSpacing);
+        } else if (result > TickMath.MAX_TICK) {
+            result -= int24(tickSpacing);
+        }
+    }
+
     function tick(uint256 price) public pure returns (int24 tick_) {
         tick_ = TickMath.getTickAtSqrtRatio(
             uint160(int160(ABDKMath64x64.sqrt(int128(int256(price << 64))) << (FixedPoint96.RESOLUTION - 64)))
         );
     }
 
+    function tick60(uint256 price) internal pure returns (int24 tick_) {
+        tick_ = tick(price);
+        tick_ = nearestUsableTick(tick_, 60);
+    }
+
     function sqrtP(uint256 price) public pure returns (uint160) {
         return TickMath.getSqrtRatioAtTick(tick(price));
+    }
+
+    function sqrtP60FromTick(int24 tick_) internal pure returns (uint160) {
+        return TickMath.getSqrtRatioAtTick(nearestUsableTick(tick_, 60));
     }
 
     function encodeError(string memory error) internal pure returns (bytes memory encoded) {
@@ -154,6 +183,17 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
         return abi.encode(IPool.CallbackData({token0: _token0, token1: _token1, payer: payer}));
     }
 
+    function nfts(ExpectedNFT memory nft_) internal pure returns (ExpectedNFT[] memory nfts_) {
+        nfts_ = new ExpectedNFT[](1);
+        nfts_[0] = nft_;
+    }
+
+    function nfts(ExpectedNFT memory nft0, ExpectedNFT memory nft1) internal pure returns (ExpectedNFT[] memory nfts_) {
+        nfts_ = new ExpectedNFT[](2);
+        nfts_[0] = nft0;
+        nfts_[1] = nft1;
+    }
+
     function mintCallback(uint256 amount0Owed, uint256 amount1Owed, bytes calldata data) external virtual override {
         if (shouldTransferInCallback) {
             IPool.CallbackData memory extra = abi.decode(data, (IPool.CallbackData));
@@ -189,6 +229,11 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
         }
 
         flashCallbackCalled = true;
+    }
+
+    function deployPool(address token0, address token1, uint24 fee, uint256 currentPrice) internal returns (Pool p) {
+        p = Pool(factory.createPool(token0, token1, fee));
+        p.initialize(sqrtP(currentPrice));
     }
 
     function setupTestCase(PoolParams memory poolParams)

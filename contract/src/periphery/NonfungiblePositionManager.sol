@@ -37,7 +37,7 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
     // The address of the factory contract
     address public immutable factory;
 
-    mapping(uint256 tokenId => Position) private _positions;
+    mapping(uint256 tokenId => Position) public _positions;
 
     // The id of the next token
     uint176 private _nextId;

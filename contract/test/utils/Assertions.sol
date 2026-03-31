@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 
 import {ERC20Mock} from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
 import {Pool} from "../../src/core/Pool.sol";
-import {INonfungiblePositionManager} from "../../src/interfaces/INonfungiblePositionManager.sol";
+import {NonfungiblePositionManager} from "../../src/periphery/NonfungiblePositionManager.sol";
 
 abstract contract Assertions is Test {
     struct ExpectedPoolState {
@@ -36,9 +36,6 @@ abstract contract Assertions is Test {
     }
 
     function assertBalances(ExpectedBalances memory expected) internal view {
-        assertEq(expected.tokens[0].balanceOf(address(this)), expected.userBalance0, "incorrect token0 balance of user");
-        assertEq(expected.tokens[1].balanceOf(address(this)), expected.userBalance1, "incorrect token1 balance of user");
-
         assertEq(
             expected.tokens[0].balanceOf(address(expected.pool)),
             expected.poolBalance0,
@@ -49,6 +46,8 @@ abstract contract Assertions is Test {
             expected.poolBalance1,
             "incorrect token1 balance of pool"
         );
+        assertEq(expected.tokens[0].balanceOf(address(this)), expected.userBalance0, "incorrect token0 balance of user");
+        assertEq(expected.tokens[1].balanceOf(address(this)), expected.userBalance1, "incorrect token1 balance of user");
     }
 
     struct ExpectedTick {
@@ -297,7 +296,7 @@ abstract contract Assertions is Test {
     }
 
     struct ExpectedNFTs {
-        INonfungiblePositionManager nft;
+        NonfungiblePositionManager nft;
         address owner;
         ExpectedNFT[] tokens;
     }
@@ -309,22 +308,22 @@ abstract contract Assertions is Test {
         int24 upperTick;
     }
 
-    // function assertNFTs(ExpectedNFTs memory expected) internal {
-    //     assertEq(expected.nft.balanceOf(address(expected.owner)), expected.tokens.length, "invalid NFT balance");
-    //     assertEq(expected.nft.totalSupply(), expected.tokens.length, "invalid NFT total supply");
+    function assertNFTs(ExpectedNFTs memory expected) internal view {
+        assertEq(expected.nft.balanceOf(address(expected.owner)), expected.tokens.length, "invalid NFT balance");
+        // assertEq(expected.nft.totalSupply(), expected.tokens.length, "invalid NFT total supply");
 
-    //     for (uint256 i = 0; i < expected.tokens.length; ++i) {
-    //         ExpectedNFT memory token = expected.tokens[i];
+        for (uint256 i = 0; i < expected.tokens.length; ++i) {
+            ExpectedNFT memory token = expected.tokens[i];
 
-    //         assertEq(expected.nft.ownerOf(token.id), expected.owner, "invalid NFT owner");
+            assertEq(expected.nft.ownerOf(token.id), expected.owner, "invalid NFT owner");
 
-    //         (address pool, int24 lowerTick, int24 upperTick) = expected.nft.positions(token.id);
+            (address pool, int24 lowerTick, int24 upperTick) = expected.nft._positions(token.id);
 
-    //         assertEq(pool, token.pool, "invalid NFT position pool");
-    //         assertEq(lowerTick, token.lowerTick, "invalid NFT position lower tick");
-    //         assertEq(upperTick, token.upperTick, "invalid NFT position upper tick");
-    //     }
-    // }
+            assertEq(pool, token.pool, "invalid NFT position pool");
+            assertEq(lowerTick, token.lowerTick, "invalid NFT position lower tick");
+            assertEq(upperTick, token.upperTick, "invalid NFT position upper tick");
+        }
+    }
 
     function assertTokenURI(string memory actual, string memory expectedFixture, string memory errMessage)
         internal
