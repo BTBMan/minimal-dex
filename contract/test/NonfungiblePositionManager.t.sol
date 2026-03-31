@@ -37,7 +37,7 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
             weth.approve(address(nonfungiblePositionManager), mintParams.amount0Desired);
             usdc.approve(address(nonfungiblePositionManager), mintParams.amount1Desired);
 
-            (poolBalance0, poolBalance1,) = nonfungiblePositionManager.mint(
+            (,, poolBalance0, poolBalance1) = nonfungiblePositionManager.mint(
                 INonfungiblePositionManager.MintParams({
                     token0: address(weth),
                     token1: address(usdc),

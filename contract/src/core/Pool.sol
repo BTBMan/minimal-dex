@@ -61,7 +61,7 @@ contract Pool is IPool {
     int24 internal immutable tickSpacing;
 
     // Fee
-    uint24 internal immutable fee;
+    uint24 public immutable fee;
 
     // Global fee amount
     uint256 public feeGrowthGlobal0X128; // token 0

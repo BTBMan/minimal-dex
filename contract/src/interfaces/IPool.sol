@@ -89,6 +89,8 @@ interface IPool {
     ////////////////////////////////////
     function token0() external view returns (address);
     function token1() external view returns (address);
+    function liquidity() external view returns (uint128 liquidity);
+    function fee() external view returns (uint24);
 
     function positions(bytes32 positionKey)
         external
@@ -120,7 +122,6 @@ interface IPool {
             uint16 observationCardinality,
             uint16 observationCardinalityNext
         );
-    function liquidity() external view returns (uint128 liquidity);
 
     function initialize(uint160 sqrtPriceX96) external;
     function mint(address owner, int24 tickLower, int24 tickUpper, uint128 amount, bytes calldata data)
