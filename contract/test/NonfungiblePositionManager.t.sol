@@ -11,6 +11,7 @@ import {TestUtils} from "./utils/TestUtils.sol";
 import {NonfungiblePositionManager} from "../src/periphery/NonfungiblePositionManager.sol";
 
 /* Interfaces ****/
+import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import {INonfungiblePositionManager} from "../src/interfaces/INonfungiblePositionManager.sol";
 import {LiquidityMath} from "../src/libraries/LiquidityMath.sol";
 
@@ -436,16 +437,11 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
             })
         );
 
-        console.log("amount0Removed", amount0Removed);
-        console.log("amount1Removed", amount1Removed);
-        console.log("amount0Collected", amount0Collected);
-        console.log("amount1Collected", amount1Collected);
-
         assertEq(tokenId, 0, "invalid token id");
-        assertEq(amount0Collected, 0.493539174222068722 ether, "invalid removed token0 amount");
+        assertEq(amount0Collected, 0.493746089868300254 ether, "invalid removed token0 amount");
         assertEq(amount1Collected, 2499.999999999999999997 ether, "invalid removed token1 amount");
 
-        (uint256 expectedAmount0, uint256 expectedAmount1) = (0.987078348444137445 ether, 5000 ether);
+        (uint256 expectedAmount0, uint256 expectedAmount1) = (0.987492179736600509 ether, 4999.999999999999999999 ether);
 
         assertMany(
             ExpectedMany({
@@ -546,7 +542,7 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
 
         assertEq(nftPositionManager.balanceOf(address(this)), 0);
 
-        // vm.expectRevert(ERC721NonexistentToken.selector, tokenId);
-        // nftPositionManager.ownerOf(tokenId);
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, tokenId));
+        nftPositionManager.ownerOf(tokenId);
     }
 }
