@@ -7,11 +7,13 @@ import {FactoryScript} from "./Factory.s.sol";
 import {SwapRouterScript} from "./SwapRouter.s.sol";
 import {QuoterScript} from "./Quoter.s.sol";
 import {NonfungiblePositionManagerScript} from "./NonfungiblePositionManager.s.sol";
+import {NonfungibleTokenPositionDescriptorScript} from "./NonfungibleTokenPositionDescriptor.s.sol";
 
 import {Factory} from "../src/core/Factory.sol";
 import {SwapRouter} from "../src/periphery/SwapRouter.sol";
 import {Quoter} from "../src/periphery/lens/Quoter.sol";
 import {NonfungiblePositionManager} from "../src/periphery/NonfungiblePositionManager.sol";
+import {NonfungibleTokenPositionDescriptor} from "../src/periphery/NonfungibleTokenPositionDescriptor.sol";
 
 /**
  * @title Public Deploy
@@ -22,6 +24,7 @@ contract DeployScript is Script, HelperConfig {
         public
         returns (
             Factory factory,
+            NonfungibleTokenPositionDescriptor nonfungibleTokenPositionDescriptor,
             NonfungiblePositionManager nonfungiblePositionManager,
             SwapRouter swapRouter,
             Quoter quoter
@@ -33,8 +36,13 @@ contract DeployScript is Script, HelperConfig {
         factory = new FactoryScript().run();
         console.log("Factory deployed at:                   ", address(factory));
 
+        // ── Deploy NonfungibleTokenPositionDescriptor Contract ──────────────────────────
+        nonfungibleTokenPositionDescriptor = new NonfungibleTokenPositionDescriptorScript().run();
+        console.log("NonfungibleTokenPositionDescriptor deployed at:", address(nonfungibleTokenPositionDescriptor));
+
         // ── Deploy NonfungiblePositionManager Contract ──────────────────────────
-        nonfungiblePositionManager = new NonfungiblePositionManagerScript(address(factory)).run();
+        nonfungiblePositionManager =
+            new NonfungiblePositionManagerScript(address(factory), address(nonfungibleTokenPositionDescriptor)).run();
         console.log("NonfungiblePositionManager deployed at:", address(nonfungiblePositionManager));
 
         // ── Deploy SwapRouter Contract ──────────────────────────

@@ -329,7 +329,7 @@ abstract contract Assertions is Test {
         internal
         view
     {
-        string memory expected = vm.readFile(string.concat("./test/fixtures/", expectedFixture));
+        string memory expected = vm.readFile(string.concat("./contract/test/fixtures/", expectedFixture));
 
         assertEq(actual, string(expected), errMessage);
     }

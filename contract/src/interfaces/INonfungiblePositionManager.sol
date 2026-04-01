@@ -72,10 +72,15 @@ interface INonfungiblePositionManager {
     event DecreaseLiquidity(uint256 indexed tokenId, uint256 amount0, uint256 amount1);
     event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1);
 
+    function factory() external view returns (address);
     function createAndInitializePoolIfNecessary(address tokenA, address tokenB, uint24 fee, uint160 sqrtPriceX96)
         external
         returns (address pool);
     function mint(MintParams calldata params)
         external
         returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
+    function positions(uint256 tokenId)
+        external
+        view
+        returns (address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper);
 }

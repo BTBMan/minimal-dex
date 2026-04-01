@@ -15,6 +15,7 @@ import {IMintCallback} from "../interfaces/callback/IMintCallback.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPool} from "../interfaces/IPool.sol";
 import {IFactory} from "../interfaces/IFactory.sol";
+import {INonfungibleTokenPositionDescriptor} from "../interfaces/INonfungibleTokenPositionDescriptor.sol";
 
 /* Libraries *****/
 import {TickMath} from "../libraries/TickMath.sol";
@@ -36,6 +37,7 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
     ////////////////////////////////////
     // The address of the factory contract
     address public immutable factory;
+    address private immutable _tokenDescriptor;
 
     mapping(uint256 tokenId => Position) public _positions;
 
@@ -60,8 +62,9 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
         _;
     }
 
-    constructor(address _factory) ERC721("Uniswap V3 Positions NFT", "UNI-V3-POS") {
+    constructor(address _factory, address _tokenDescriptor_) ERC721("Uniswap V3 Positions NFT", "UNI-V3-POS") {
         factory = _factory;
+        _tokenDescriptor = _tokenDescriptor_;
     }
 
     ////////////////////////////////////
@@ -129,7 +132,7 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        return "";
+        return INonfungibleTokenPositionDescriptor(_tokenDescriptor).tokenURI(this, tokenId);
     }
 
     // External view  //////////////////
@@ -304,6 +307,22 @@ contract NonfungiblePositionManager is INonfungiblePositionManager, IMintCallbac
     function poolPositionKey(Position memory position) internal view returns (bytes32) {
         // We use the NonfungiblePositionManager to manage the position, so all the position's owner is the current contract
         return keccak256(abi.encodePacked(address(this), position.tickLower, position.tickUpper));
+    }
+
+    /**
+     * @notice Get the position info and extra data for given tokenId
+     */
+    function positions(uint256 tokenId)
+        external
+        view
+        returns (address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper)
+    {
+        Position memory position = _positions[tokenId];
+        IPool pool = IPool(position.pool);
+        (token0, token1) = (pool.token0(), pool.token1());
+        fee = pool.fee();
+        tickLower = position.tickLower;
+        tickUpper = position.tickUpper;
     }
 
     // Internal view  //////////////////

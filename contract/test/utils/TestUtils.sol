@@ -3,8 +3,10 @@ pragma solidity ^0.8.27;
 
 import "forge-std/Test.sol";
 import {FactoryScript} from "../../script/Factory.s.sol";
+import {NonfungibleTokenPositionDescriptorScript} from "../../script/NonfungibleTokenPositionDescriptor.s.sol";
 import {Pool} from "../../src/core/Pool.sol";
 import {Factory} from "../../src/core/Factory.sol";
+import {NonfungibleTokenPositionDescriptor} from "../../src/periphery/NonfungibleTokenPositionDescriptor.sol";
 
 /* Interfaces ****/
 import {INonfungiblePositionManager} from "../../src/interfaces/INonfungiblePositionManager.sol";
@@ -71,6 +73,7 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
     }
 
     Factory public factory;
+    NonfungibleTokenPositionDescriptor public nonfungibleTokenPositionDescriptor;
     Pool public pool;
     ERC20Mock public weth; // ETH
     ERC20Mock public usdc; // USDC
@@ -100,6 +103,8 @@ abstract contract TestUtils is Test, Assertions, IMintCallback, ISwapCallback, I
         (weth, usdc) = address(_tokenA) < address(_tokenB) ? (_tokenA, _tokenB) : (_tokenB, _tokenA);
 
         factory = new FactoryScript().run();
+        nonfungibleTokenPositionDescriptor = new NonfungibleTokenPositionDescriptorScript().run();
+
         vm.deal(user, STARTING_BALANCE);
     }
 

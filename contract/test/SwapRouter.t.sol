@@ -38,7 +38,8 @@ contract SwapRouterTest is Test, TestUtils {
         pool = Pool(factory.createPool(mintParams.token0, mintParams.token1, 1));
         pool.initialize(sqrtP(mintParams.currentPrice));
 
-        nonfungiblePositionManager = new NonfungiblePositionManagerScript(address(factory)).run();
+        nonfungiblePositionManager =
+            new NonfungiblePositionManagerScript(address(factory), address(nonfungibleTokenPositionDescriptor)).run();
 
         // Mint tokens to this test contract
         ERC20Mock(mintParams.token0).mint(address(this), mintParams.token0Balance);

@@ -3,7 +3,8 @@
     "abdk",
     "Agos",
     "Cumulatives",
-    "keyvalues"
+    "keyvalues",
+    "tokenuri"
   ],
 
   "prettier.enable": false,

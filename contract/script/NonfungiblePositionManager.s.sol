@@ -7,9 +7,11 @@ import {HelperConfig} from "./HelperConfig.s.sol";
 
 contract NonfungiblePositionManagerScript is Script, HelperConfig {
     address public immutable factory;
+    address public immutable nonfungibleTokenPositionDescriptor;
 
-    constructor(address _factory) {
+    constructor(address _factory, address _nonfungibleTokenPositionDescriptor) {
         factory = _factory;
+        nonfungibleTokenPositionDescriptor = _nonfungibleTokenPositionDescriptor;
     }
 
     function setUp() public {}
@@ -17,7 +19,7 @@ contract NonfungiblePositionManagerScript is Script, HelperConfig {
     function run() public returns (NonfungiblePositionManager nonfungiblePositionManager) {
         vm.startBroadcast();
 
-        nonfungiblePositionManager = new NonfungiblePositionManager(factory);
+        nonfungiblePositionManager = new NonfungiblePositionManager(factory, nonfungibleTokenPositionDescriptor);
 
         vm.stopBroadcast();
     }

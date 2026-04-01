@@ -41,7 +41,8 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
         dai = new ERC20Mock();
         uni = new ERC20Mock();
 
-        nftPositionManager = new NonfungiblePositionManagerScript(address(factory)).run();
+        nftPositionManager =
+            new NonfungiblePositionManagerScript(address(factory), address(nonfungibleTokenPositionDescriptor)).run();
 
         wethUsdc = deployPool(address(weth), address(usdc), FEE, INIT_PRICE);
         usdcDai = deployPool(address(usdc), address(dai), STABLE_FEE, INIT_PRICE);
@@ -58,7 +59,8 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
     }
 
     function testInitializeSuccess() public {
-        NonfungiblePositionManager positionManager = new NonfungiblePositionManagerScript(address(factory)).run();
+        NonfungiblePositionManager positionManager =
+            new NonfungiblePositionManagerScript(address(factory), address(nonfungibleTokenPositionDescriptor)).run();
 
         uint160 initializedSqrtPriceX96 = sqrtP(5000);
 
@@ -544,5 +546,54 @@ contract NonfungiblePositionManagerTest is Test, TestUtils {
 
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, tokenId));
         nftPositionManager.ownerOf(tokenId);
+    }
+
+    function testTokenURI() public {
+        (uint256 tokenId0,,,) = nftPositionManager.mint(
+            INonfungiblePositionManager.MintParams({
+                recipient: address(this),
+                token0: address(weth),
+                token1: address(usdc),
+                fee: FEE,
+                tickLower: tick60(4545),
+                tickUpper: tick60(5500),
+                amount0Desired: 1 ether,
+                amount1Desired: 5000 ether,
+                amount0Min: 0,
+                amount1Min: 0
+            })
+        );
+        (uint256 tokenId1,,,) = nftPositionManager.mint(
+            INonfungiblePositionManager.MintParams({
+                recipient: address(this),
+                token0: address(usdc),
+                token1: address(dai),
+                fee: STABLE_FEE,
+                tickLower: -520, // 0.95
+                tickUpper: 490, // 1.05
+                amount0Desired: 100_000 ether,
+                amount1Desired: 100_000 ether,
+                amount0Min: 0,
+                amount1Min: 0
+            })
+        );
+        (uint256 tokenId2,,,) = nftPositionManager.mint(
+            INonfungiblePositionManager.MintParams({
+                recipient: address(this),
+                token0: address(weth),
+                token1: address(uni),
+                fee: FEE,
+                tickLower: tick60(7),
+                tickUpper: tick60(13),
+                amount0Desired: 1_000 ether,
+                amount1Desired: 10_000 ether,
+                amount0Min: 0,
+                amount1Min: 0
+            })
+        );
+
+        assertTokenURI(nftPositionManager.tokenURI(tokenId0), "tokenuri0", "invalid token URI");
+        assertTokenURI(nftPositionManager.tokenURI(tokenId1), "tokenuri1", "invalid token URI");
+        assertTokenURI(nftPositionManager.tokenURI(tokenId2), "tokenuri2", "invalid token URI");
     }
 }
